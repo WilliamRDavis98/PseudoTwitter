@@ -1,6 +1,6 @@
 package com.team2.Assessment1.entities;
 
-import java.util.Date;
+import java.sql.Timestamp;
 
 import javax.persistence.Embeddable;
 
@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class Profile {
 	
 	// TODO: Determine if this needs to be a Date
-	private String joined;
+	private Timestamp joined;
 	
 	private boolean deleted;
 	
