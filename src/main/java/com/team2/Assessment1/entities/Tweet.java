@@ -3,12 +3,14 @@ package com.team2.Assessment1.entities;
 import java.sql.Timestamp;
 import java.util.List;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,20 +29,28 @@ public class Tweet {
 	@JoinColumn(name="user_id")
 	private User author;
 
+	@Column(nullable = false)
 	private Timestamp posted;
 
 	private boolean deleted;
 
 	private String content;
+	
+	@OneToMany(mappedBy = "inReplyTo")
+	private List<Tweet> replies;
 
 	// Foreign Key
 	@ManyToOne
-	@JoinColumn(name = "tweet_id") // TODO: If it doesn't work, try "id"
+	@JoinColumn(name = "replied_tweet_id")
 	private Tweet inReplyTo;
 
+	
+	@OneToMany(mappedBy = "repostOf")
+	private List<Tweet> reposts;
+	
 	// Foreign Key
 	@ManyToOne
-	@JoinColumn(name = "tweet_id") // TODO: Same ^
+	@JoinColumn(name = "reposted_tweet_id")
 	private Tweet repostOf;
 
 	@ManyToMany(mappedBy = "taggedTweets")

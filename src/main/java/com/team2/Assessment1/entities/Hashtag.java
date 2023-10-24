@@ -3,6 +3,7 @@ package com.team2.Assessment1.entities;
 import java.sql.Timestamp;
 import java.util.List;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -25,12 +26,15 @@ public class Hashtag {
 	@GeneratedValue
 	private Long id;
 
+	@Column(nullable = false)
 	private String label;
 
 	@CreationTimestamp
+	@Column(nullable = false)
 	private Timestamp firstUsed;
 
-	@UpdateTimestamp // anytime its reposted to the DB, it will update so you know when its used last
+	@UpdateTimestamp
+	@Column(nullable = false)
 	private Timestamp lastUsed;
 
 	@ManyToMany

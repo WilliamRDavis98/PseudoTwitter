@@ -2,6 +2,7 @@ package com.team2.Assessment1.entities;
 
 import java.util.List;
 
+import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -24,11 +25,13 @@ public class User {
 	@Id
 	@GeneratedValue
 	private Long id;
-
+	
 	@Embedded
+	@Column(nullable = false)
 	private Credentials credentials;
 
 	@Embedded
+	@Column(nullable = false)
 	private Profile profile;
 
 	@OneToMany(mappedBy = "author")

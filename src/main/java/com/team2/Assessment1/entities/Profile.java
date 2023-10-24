@@ -2,6 +2,7 @@ package com.team2.Assessment1.entities;
 
 import java.sql.Timestamp;
 
+import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
 import lombok.Data;
@@ -12,16 +13,20 @@ import lombok.NoArgsConstructor;
 @Data
 public class Profile {
 	
-	// TODO: Determine if this needs to be a Date
+	//Required Fields
+	@Column(nullable = false)
 	private Timestamp joined;
 	
+	@Column(nullable = false)
 	private boolean deleted;
+
+	@Column(nullable = false)
+	private String email;
+	
+	//Optional Fields
+	private String phone;
 	
 	private String firstName;
 	
 	private String lastName;
-	
-	private String email;
-	
-	private String phone;
 }
