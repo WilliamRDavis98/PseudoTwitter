@@ -1,5 +1,6 @@
 package com.team2.Assessment1.entities;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -12,6 +13,8 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+
+import org.hibernate.annotations.CreationTimestamp;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,12 +30,16 @@ public class User {
 	private Long id;
 	
 	@Embedded
-	@Column(nullable = false)
 	private Credentials credentials;
 
 	@Embedded
-	@Column(nullable = false)
 	private Profile profile;
+	
+	@CreationTimestamp
+	@Column(nullable=false)
+	private Timestamp joined;
+	
+	private boolean deleted=false;
 
 	@OneToMany(mappedBy = "author")
 	private List<Tweet> tweets;
@@ -41,12 +48,11 @@ public class User {
 	@JoinTable(name = "user_likes", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "tweet_id"))
 	private List<Tweet> likedTweets;
 
-	@ManyToMany
-	@JoinTable(name = "user_mentions", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "tweet_id"))
+	@ManyToMany(mappedBy = "mentions")
 	private List<Tweet> mentionedBy;
 
 	@ManyToMany
-	@JoinTable(name = "followers_following", joinColumns = @JoinColumn(name = "following_id"), inverseJoinColumns = @JoinColumn(name = "follower_id"))
+	@JoinTable(name = "followers_following")
 	private List<User> following;
 
 	@ManyToMany(mappedBy = "following")

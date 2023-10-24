@@ -8,9 +8,12 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+
+import org.hibernate.annotations.CreationTimestamp;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,39 +29,41 @@ public class Tweet {
 
 	// Foreign Key
 	@ManyToOne
-	@JoinColumn(name="user_id")
 	private User author;
 
+	@CreationTimestamp
 	@Column(nullable = false)
 	private Timestamp posted;
 
-	private boolean deleted;
+	private boolean deleted = false;
 
 	private String content;
 	
 	@OneToMany(mappedBy = "inReplyTo")
 	private List<Tweet> replies;
 
-	// Foreign Key
 	@ManyToOne
-	@JoinColumn(name = "replied_tweet_id")
 	private Tweet inReplyTo;
 
 	
 	@OneToMany(mappedBy = "repostOf")
 	private List<Tweet> reposts;
 	
-	// Foreign Key
 	@ManyToOne
-	@JoinColumn(name = "reposted_tweet_id")
 	private Tweet repostOf;
 
-	@ManyToMany(mappedBy = "taggedTweets")
+	@ManyToMany
+	@JoinTable(
+			name = "tweet_hashtags", 
+			joinColumns = @JoinColumn(name = "hashtag_id"), 
+			inverseJoinColumns = @JoinColumn(name = "tweet_id")
+			)
 	private List<Hashtag> tags;
 
 	@ManyToMany(mappedBy = "likedTweets")
 	private List<User> likedBy;
 
-	@ManyToMany(mappedBy = "mentionedBy")
+	@ManyToMany
+	@JoinTable(name = "user_mentions", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "tweet_id"))
 	private List<User> mentions;
 }

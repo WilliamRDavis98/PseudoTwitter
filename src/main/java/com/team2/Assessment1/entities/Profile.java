@@ -13,13 +13,6 @@ import lombok.NoArgsConstructor;
 @Data
 public class Profile {
 	
-	//Required Fields
-	@Column(nullable = false)
-	private Timestamp joined;
-	
-	@Column(nullable = false)
-	private boolean deleted;
-
 	@Column(nullable = false)
 	private String email;
 	

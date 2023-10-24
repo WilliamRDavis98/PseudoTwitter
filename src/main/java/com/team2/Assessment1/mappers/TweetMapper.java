@@ -8,7 +8,7 @@ import com.team2.Assessment1.dtos.TweetRequestDto;
 import com.team2.Assessment1.dtos.TweetResponseDto;
 import com.team2.Assessment1.entities.Tweet;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {UserMapper.class})
 public interface TweetMapper {
 	TweetResponseDto entityToDto(Tweet entity);
 	Tweet dtoToEntity(TweetRequestDto requestDto);
