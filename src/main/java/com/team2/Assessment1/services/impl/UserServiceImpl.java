@@ -34,6 +34,10 @@ public class UserServiceImpl implements UserService {
 	private final TweetRepository tweetRepository;
 	private final HashtagRepository hashtagRepository;
 
+	@Override
+	public UserResponseDto getUser(String username) {
+		return userMapper.entityToDto(userRepository.findByCredentialsUsername(username));
+	}
 	
 	@Override
 	public List<UserResponseDto> getAllUsers() {
@@ -68,5 +72,46 @@ public class UserServiceImpl implements UserService {
 		
 		return userMapper.entityToDto(userRepository.saveAndFlush(user));
 	}
+	
+
+	
+//	@Override
+//	public ResponseEntity<List<TweetResponseDto>> getMentions(String username) {
+//		return null;
+//		return new ResponseEntity<>(tweetMapper.entitiesToDtos(tweetRepository.findMentionsByUsername(username)), HttpStatus.OK);
+//	}
+//
+//	@Override
+//	public ResponseEntity<List<UserResponseDto>> getFollowedUsers(String username) {
+//		User user = userRepository.findByUsername(username);
+//		if(user == null) {
+//			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+//		}
+//		
+//		List<User> followedUsers = user.getFollowing().stream().filter(User::isActive).collect(Collectors.toList());
+//		
+//		List<UserResponseDto> dtos = userMapper.entitiesToDtos(followedUsers);
+//				
+//		
+//		return new ResponseEntity<>(dtos, HttpStatus.OK);
+//		
+//		return null;
+//	}
+//
+//	@Override
+//	public ResponseEntity<List<UserResponseDto>> getFollowers(String username) {
+//		User user = userRepository.findByUsername(username);
+//		if(user == null) {
+//			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+//		}
+//		
+//		List<User> followers = user.getFollowers().stream().filter(User::isActive).collect(Collectors.toList());
+//		
+//		List<UserResponseDto> dtos = userMapper.entitiesToDtos(followers);
+//				
+//		
+//		return new ResponseEntity<>(dtos, HttpStatus.OK);
+//		return null;
+//	}
 
 }

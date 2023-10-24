@@ -17,5 +17,4 @@ public interface UserMapper {
 	UserResponseDto entityToDto(User entity);
 	User dtoToEntity(UserRequestDto requestDto);
 	List<UserResponseDto> entitiesToDtos(List<User> entities);
-//	List<UserResponseDto> entitiesToDtos(List<User> followedUsers);
 }

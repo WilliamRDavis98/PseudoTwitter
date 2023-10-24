@@ -55,4 +55,9 @@ public class UserController {
 //		return userService.getFollowers(username);
 	}
 
+	@GetMapping("/@{username}")
+	public UserResponseDto getUser(@PathVariable String username){
+		return userService.getUser(username);
+	}
+	
 }
