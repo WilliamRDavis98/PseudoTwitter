@@ -7,6 +7,6 @@ import com.team2.Assessment1.entities.Credentials;
 
 @Mapper(componentModel = "spring")
 public interface CredentialsMapper {
-	CredentialsDto entityToDto(Credentials entity); //TODO: Do we just need this?
+	CredentialsDto entityToDto(Credentials entity);
 	Credentials dtoToEntity(CredentialsDto dto);
 }
