@@ -9,6 +9,8 @@ import com.team2.Assessment1.dtos.UserResponseDto;
 
 public interface UserService {
 
+	List<UserResponseDto> getAllUsers();
+
 //	ResponseEntity<List<TweetResponseDto>> getMentions(String username);
 //
 //	ResponseEntity<List<UserResponseDto>> getFollowedUsers(String username);
