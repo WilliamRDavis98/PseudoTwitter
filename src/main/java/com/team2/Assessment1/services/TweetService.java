@@ -10,4 +10,6 @@ public interface TweetService {
 	List<TweetResponseDto> getAllTweets();
 
 	TweetResponseDto createTweet(TweetRequestDto tweetRequestDto);
+
+	TweetResponseDto getTweet(Long id);
 }

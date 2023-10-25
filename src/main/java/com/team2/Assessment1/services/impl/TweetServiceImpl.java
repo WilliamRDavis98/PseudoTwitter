@@ -1,6 +1,7 @@
 package com.team2.Assessment1.services.impl;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -28,6 +29,21 @@ public class TweetServiceImpl implements TweetService{
 	// Repository Declarations
 	private final TweetRepository tweetRepository;
 	private final UserRepository userRepository;
+	
+	@Override
+	public TweetResponseDto getTweet(Long id) {
+		Optional<Tweet> requestedTweet = tweetRepository.findById(id);
+		
+		if(requestedTweet.isEmpty()) {
+			throw new NotFoundException("Tweet with id '" + id + "' not found");
+		}
+		
+		if(requestedTweet.get().isDeleted()) {
+			throw new NotFoundException("Tweet with id '" + id + "' has been deleted");
+		}
+		
+		return tweetMapper.entityToDto(requestedTweet.get());
+	}
 	
 	@Override
 	public List<TweetResponseDto> getAllTweets() {		
@@ -64,5 +80,4 @@ public class TweetServiceImpl implements TweetService{
 		
 		return tweetMapper.entityToDto(tweetRepository.saveAndFlush(newTweet));
 	}
-
 }
