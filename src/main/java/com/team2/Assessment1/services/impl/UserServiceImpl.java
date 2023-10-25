@@ -111,7 +111,7 @@ public class UserServiceImpl implements UserService {
 			user.setDeleted(false);
 		}
 		
-		return userMapper.entityToDto(userRepository.saveAndFlush(user));
+		return userMapper.entityToDto(userRepository.saveAndFlush(user)); 
 	}
 	
 
