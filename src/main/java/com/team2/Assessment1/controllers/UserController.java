@@ -23,22 +23,9 @@ public class UserController {
 	
 	private final UserService userService;
 	
-	@GetMapping("/@{username}/mentions")
-	public ResponseEntity<List<TweetResponseDto>> getMentions(@PathVariable String username) {
-		return null;
-//		return userService.getMentions(username);
-	}
-	
-	@GetMapping("/@{username}/following")
-	public ResponseEntity<List<UserResponseDto>> getFollowedUsers(@PathVariable String username) {
-		return null;
-//		return userService.getFollowedUsers(username);
-	}
-	
-	@GetMapping("/@{username}/followers")
-	public ResponseEntity<List<UserResponseDto>> getFollowers(@PathVariable String username) {
-		return null;
-//		return userService.getFollowers(username);
+	@GetMapping
+	public List<UserResponseDto> getAllUsers(){
+		return userService.getAllUsers();
 	}
 
 }

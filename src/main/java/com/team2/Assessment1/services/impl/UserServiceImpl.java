@@ -34,6 +34,11 @@ public class UserServiceImpl implements UserService {
 	private final UserMapper userMapper;
 	private final TweetMapper tweetMapper;
 	private final HashtagMapper hashtagMapper;
+	@Override
+	public List<UserResponseDto> getAllUsers() {
+		// TODO Auto-generated method stub
+		return userMapper.entitiesToDtos(userRepository.findAllByDeletedFalse());
+	}
 	
 //	@Override
 //	public ResponseEntity<List<TweetResponseDto>> getMentions(String username) {
