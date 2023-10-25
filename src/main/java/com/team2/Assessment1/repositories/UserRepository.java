@@ -1,6 +1,7 @@
 package com.team2.Assessment1.repositories;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -12,5 +13,6 @@ public interface UserRepository extends JpaRepository<User, Long>{
 	
 	List<User> findAllByDeletedFalse();
 
-	User findByCredentialsUsername(String userName);
+	Optional<User> findByCredentialsUsernameAndDeletedFalse(String username);
+
 }

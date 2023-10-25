@@ -68,7 +68,7 @@ public class TweetServiceImpl implements TweetService {
 		}
 
 		Tweet newTweet = tweetMapper.dtoToEntity(tweetRequestDto);
-		User user = userRepository.findByCredentialsUsername(userCredentials.getUsername());
+		User user = userRepository.findByCredentialsUsernameAndDeletedFalse(userCredentials.getUsername()).get();
 
 		// Check if User exists
 		if (user == null || user.isDeleted()) {
@@ -83,7 +83,7 @@ public class TweetServiceImpl implements TweetService {
 	@Override
 	public void likeTweet(Long id, CredentialsDto credentialsDto) {
 		Tweet tweetToLike = tweetRepository.getById(id);
-		User user = userRepository.findByCredentialsUsername(credentialsDto.getUsername());
+		User user = userRepository.findByCredentialsUsernameAndDeletedFalse(credentialsDto.getUsername()).get();
 
 		if (tweetToLike == null || tweetToLike.isDeleted()) {
 			throw new NotFoundException("Tweet with id '" + id + "' has been deleted or doesn't exist");
@@ -106,7 +106,7 @@ public class TweetServiceImpl implements TweetService {
 		}
 
 		Tweet deletedTweet = findTweet.get();
-		User user = userRepository.findByCredentialsUsername(credentialsDto.getUsername());
+		User user = userRepository.findByCredentialsUsernameAndDeletedFalse(credentialsDto.getUsername()).get();
 
 		if (!deletedTweet.getAuthor().equals(user)) {
 			throw new NotFoundException("User requesting deletion is not author of the tweet");
