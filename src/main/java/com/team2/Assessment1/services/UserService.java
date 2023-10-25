@@ -21,12 +21,11 @@ public interface UserService {
 
 	void followUser(String username, CredentialsDto credentialsDto);
 
-//
-//	List<TweetResponseDto> getMentions(String username);
-//
-//	List<UserResponseDto> getFollowedUsers(String username);
-//
-//	List<UserResponseDto> getFollowers(String username);
+	List<TweetResponseDto> getMentions(String username);
+
+	List<UserResponseDto> getFollowedUsers(String username);
+
+	List<UserResponseDto> getFollowers(String username);
 
 	void unfollowUser(String username, CredentialsDto credentialsDto);
 }
