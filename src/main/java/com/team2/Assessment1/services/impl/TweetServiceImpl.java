@@ -21,63 +21,62 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class TweetServiceImpl implements TweetService{
-	
+public class TweetServiceImpl implements TweetService {
+
 	// Mapper Declarations
 	private final TweetMapper tweetMapper;
-	
+
 	// Repository Declarations
 	private final TweetRepository tweetRepository;
 	private final UserRepository userRepository;
-	
+
 	@Override
 	public TweetResponseDto getTweet(Long id) {
 		Optional<Tweet> requestedTweet = tweetRepository.findById(id);
-		
-		if(requestedTweet.isEmpty()) {
+
+		if (requestedTweet.isEmpty()) {
 			throw new NotFoundException("Tweet with id '" + id + "' not found");
 		}
-		
-		if(requestedTweet.get().isDeleted()) {
+
+		if (requestedTweet.get().isDeleted()) {
 			throw new NotFoundException("Tweet with id '" + id + "' has been deleted");
 		}
-		
+
 		return tweetMapper.entityToDto(requestedTweet.get());
 	}
-	
+
 	@Override
-	public List<TweetResponseDto> getAllTweets() {		
+	public List<TweetResponseDto> getAllTweets() {
 		return tweetMapper.entitiesToDtos(tweetRepository.findAllByDeletedFalse());
 	}
 
 	@Override
-	public TweetResponseDto createTweet(TweetRequestDto tweetRequestDto) {	
+	public TweetResponseDto createTweet(TweetRequestDto tweetRequestDto) {
 		CredentialsDto userCredentials = tweetRequestDto.getCredentials();
-		
+
 		// Error Handling for BadRequestException
-		if(tweetRequestDto.getContent() == null) {
+		if (tweetRequestDto.getContent() == null) {
 			throw new BadRequestException("Bad Request: No Content");
 		}
-		
-		if(userCredentials == null ) {
+
+		if (userCredentials == null) {
 			throw new BadRequestException("Bad Request: No Credentials");
 		}
-		
-		if(userCredentials.getPassword() == null || userCredentials.getUsername() == null) {
+
+		if (userCredentials.getPassword() == null || userCredentials.getUsername() == null) {
 			throw new BadRequestException("Bad Request: Missing username/password in Credentials");
 		}
-		
-		
+
 		Tweet newTweet = tweetMapper.dtoToEntity(tweetRequestDto);
 		User user = userRepository.findByCredentialsUsername(userCredentials.getUsername());
-		
+
 		// Check if User exists
-		if(user == null || user.isDeleted()) {
+		if (user == null || user.isDeleted()) {
 			throw new NotFoundException("User not found or not active" + user);
 		}
-		
+
 		newTweet.setAuthor(user);
-		
+
 		return tweetMapper.entityToDto(tweetRepository.saveAndFlush(newTweet));
 	}
 
@@ -85,16 +84,40 @@ public class TweetServiceImpl implements TweetService{
 	public void likeTweet(Long id, CredentialsDto credentialsDto) {
 		Tweet tweetToLike = tweetRepository.getById(id);
 		User user = userRepository.findByCredentialsUsername(credentialsDto.getUsername());
-		
-		if(tweetToLike == null || tweetToLike.isDeleted()) {
+
+		if (tweetToLike == null || tweetToLike.isDeleted()) {
 			throw new NotFoundException("Tweet with id '" + id + "' has been deleted or doesn't exist");
 		}
-		
-		if(user == null || user.isDeleted()) {
+
+		if (user == null || user.isDeleted()) {
 			throw new NotFoundException("User matching given credentials not found");
 		}
-		
+
 		user.getLikedTweets().add(tweetToLike);
 		userRepository.saveAndFlush(user);
+	}
+
+	@Override
+	public TweetResponseDto deleteTweet(Long id, CredentialsDto credentialsDto) {
+		Optional<Tweet> findTweet = tweetRepository.findById(id);
+
+		if (findTweet.isEmpty()) {
+			throw new NotFoundException("Tweet with id '" + id + "' not found");
+		}
+
+		Tweet deletedTweet = findTweet.get();
+		User user = userRepository.findByCredentialsUsername(credentialsDto.getUsername());
+
+		if (!deletedTweet.getAuthor().equals(user)) {
+			throw new NotFoundException("User requesting deletion is not author of the tweet");
+		}
+
+		if (deletedTweet.isDeleted()) {
+			throw new BadRequestException("Tweet is already deleted with id " + id);
+		}
+
+		deletedTweet.setDeleted(true);
+
+		return tweetMapper.entityToDto(tweetRepository.saveAndFlush(deletedTweet));
 	}
 }

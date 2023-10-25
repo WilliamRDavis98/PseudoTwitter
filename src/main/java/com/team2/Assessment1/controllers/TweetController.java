@@ -2,6 +2,7 @@ package com.team2.Assessment1.controllers;
 
 import java.util.List;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,6 +44,11 @@ public class TweetController {
 	@PostMapping("/{id}/like")
 	public void likeTweet(@PathVariable Long id, @RequestBody CredentialsDto credentialsDto) {
 		tweetService.likeTweet(id, credentialsDto);
+	}
+	
+	@DeleteMapping("/{id}")
+	public TweetResponseDto deleteTweet(@PathVariable Long id, @RequestBody CredentialsDto credentialsDto) {
+		return tweetService.deleteTweet(id, credentialsDto);
 	}
 
 }
