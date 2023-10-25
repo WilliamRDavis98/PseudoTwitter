@@ -80,4 +80,21 @@ public class TweetServiceImpl implements TweetService{
 		
 		return tweetMapper.entityToDto(tweetRepository.saveAndFlush(newTweet));
 	}
+
+	@Override
+	public void likeTweet(Long id, CredentialsDto credentialsDto) {
+		Tweet tweetToLike = tweetRepository.getById(id);
+		User user = userRepository.findByCredentialsUsername(credentialsDto.getUsername());
+		
+		if(tweetToLike == null || tweetToLike.isDeleted()) {
+			throw new NotFoundException("Tweet with id '" + id + "' has been deleted or doesn't exist");
+		}
+		
+		if(user == null || user.isDeleted()) {
+			throw new NotFoundException("User matching given credentials not found");
+		}
+		
+		user.getLikedTweets().add(tweetToLike);
+		userRepository.saveAndFlush(user);
+	}
 }
