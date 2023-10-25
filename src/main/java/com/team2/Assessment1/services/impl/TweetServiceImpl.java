@@ -53,14 +53,16 @@ public class TweetServiceImpl implements TweetService{
 		
 		
 		Tweet newTweet = tweetMapper.dtoToEntity(tweetRequestDto);
-		User user = userRepository.findByCredentialsUsername(newTweet.getAuthor());
+		User user = userRepository.findByCredentialsUsername(userCredentials.getUsername());
 		
 		// Check if User exists
 		if(user == null || user.isDeleted()) {
 			throw new NotFoundException("User not found or not active" + user);
 		}
 		
-		return tweetMapper.entityToDto(newTweet);
+		newTweet.setAuthor(user);
+		
+		return tweetMapper.entityToDto(tweetRepository.saveAndFlush(newTweet));
 	}
 
 }
