@@ -1,6 +1,7 @@
 package com.team2.Assessment1.services.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,6 +13,7 @@ import com.team2.Assessment1.dtos.HashtagDto;
 import com.team2.Assessment1.dtos.TweetRequestDto;
 import com.team2.Assessment1.dtos.TweetResponseDto;
 import com.team2.Assessment1.dtos.UserResponseDto;
+import com.team2.Assessment1.entities.Hashtag;
 import com.team2.Assessment1.entities.Tweet;
 import com.team2.Assessment1.entities.User;
 import com.team2.Assessment1.exceptions.BadRequestException;
@@ -19,6 +21,7 @@ import com.team2.Assessment1.exceptions.NotFoundException;
 import com.team2.Assessment1.mappers.HashtagMapper;
 import com.team2.Assessment1.mappers.TweetMapper;
 import com.team2.Assessment1.mappers.UserMapper;
+import com.team2.Assessment1.repositories.HashtagRepository;
 import com.team2.Assessment1.repositories.TweetRepository;
 import com.team2.Assessment1.repositories.UserRepository;
 import com.team2.Assessment1.services.TweetService;
@@ -37,6 +40,7 @@ public class TweetServiceImpl implements TweetService {
 	// Repository Declarations
 	private final TweetRepository tweetRepository;
 	private final UserRepository userRepository;
+	private final HashtagRepository hashtagRepository;
 
 	@Override
 	public TweetResponseDto getTweet(Long id) {
@@ -84,7 +88,40 @@ public class TweetServiceImpl implements TweetService {
 		}
 
 		newTweet.setAuthor(user);
-
+		
+		//Take the #hashTags and @User mentions and store those appropriately
+		String[] contentSplitOnSpace = newTweet.getContent().split("\\s");		
+		
+		
+		for(String word: contentSplitOnSpace) {
+			
+			// Addresses the #tags used in the Tweets content
+			if(word.startsWith("#")) {
+				String label = word.substring(1, word.length());
+				Hashtag tag = hashtagRepository.findByLabel(word);
+				if(tag == null) {
+					tag = new Hashtag();
+					tag.setLabel(label);
+					
+					tag.setTaggedTweets(Collections.singletonList(newTweet));
+					newTweet.setTags(Collections.singletonList(tag));
+				} else {
+					tag.getTaggedTweets().add(newTweet);
+				}
+				
+				hashtagRepository.saveAndFlush(tag);
+			}
+			
+			// Adds users to the Tweets List<User> mentions
+			if(word.startsWith("@")) {
+				String userName = word.substring(1, word.length());
+				Optional<User> mentionedUser = userRepository.findByCredentialsUsernameAndDeletedFalse(userName);
+				
+				newTweet.setMentions(Collections.singletonList(mentionedUser.get()));
+				mentionedUser.get().getMentionedBy().add(newTweet);
+			}
+		}
+		
 		return tweetMapper.entityToDto(tweetRepository.saveAndFlush(newTweet));
 	}
 
