@@ -5,13 +5,16 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.team2.Assessment1.dtos.CredentialsDto;
 import com.team2.Assessment1.dtos.UserRequestDto;
 import com.team2.Assessment1.dtos.UserResponseDto;
 import com.team2.Assessment1.entities.Credentials;
 import com.team2.Assessment1.entities.Profile;
 import com.team2.Assessment1.entities.User;
 import com.team2.Assessment1.exceptions.BadRequestException;
+import com.team2.Assessment1.exceptions.NotAuthorizedException;
 import com.team2.Assessment1.exceptions.NotFoundException;
+import com.team2.Assessment1.mappers.CredentialsMapper;
 import com.team2.Assessment1.mappers.HashtagMapper;
 import com.team2.Assessment1.mappers.TweetMapper;
 import com.team2.Assessment1.mappers.UserMapper;
@@ -30,6 +33,8 @@ public class UserServiceImpl implements UserService {
 	private final UserMapper userMapper;
 	private final TweetMapper tweetMapper;
 	private final HashtagMapper hashtagMapper;
+	private final CredentialsMapper credentialsMapper;
+
 	
 	// Repository declarations
 	private final UserRepository userRepository;
@@ -38,12 +43,32 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public UserResponseDto getUser(String username) {
-		Optional<User> userToReturn = userRepository.findByCredentialsUsername(username);
+		Optional<User> userToReturn = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
 		if(userToReturn.isEmpty()) {
 			throw new NotFoundException("No user with username: " + username);
 		}
 		return userMapper.entityToDto(userToReturn.get());
 	}
+
+	@Override
+	public UserResponseDto deleteUser(String username, CredentialsDto credentialsDto) {
+		Optional<User> userToDelete = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
+		if (userToDelete.isEmpty()) {
+			throw new NotFoundException("No user with username: " + username);
+		}
+		Credentials submittedCredentials = credentialsMapper.dtoToEntity(credentialsDto);
+		if (!userToDelete.get().getCredentials().getPassword().equals(submittedCredentials.getPassword())) {
+			throw new NotAuthorizedException("Incorrect Password");
+		}
+		
+		userToDelete.get().setDeleted(true);
+		userRepository.saveAndFlush(userToDelete.get());
+		return userMapper.entityToDto(userToDelete.get());
+		
+	}
+	
+	
+	
 	
 	@Override
 	public List<UserResponseDto> getAllUsers() {
@@ -68,7 +93,7 @@ public class UserServiceImpl implements UserService {
 			throw new BadRequestException("Bad Request: Missing username/password in Credentials");
 		}
 		
-		if(userRepository.findByCredentialsUsername(userCredentials.getUsername()).isEmpty() && !user.isDeleted()) {
+		if(userRepository.findByCredentialsUsernameAndDeletedFalse(userCredentials.getUsername()).isEmpty() && !user.isDeleted()) {
 			throw new BadRequestException("Bad Request: Username is already taken");
 		}
 		
