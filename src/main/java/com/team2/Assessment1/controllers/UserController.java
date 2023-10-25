@@ -67,4 +67,9 @@ public class UserController {
 		return userService.deleteUser(username, credentialsDto);
 	} 
 	
+	@GetMapping("/@{username}/tweets")
+	public List<TweetResponseDto> getUserTweets(@PathVariable String username){
+		return userService.getUserTweets(username);
+	}
+	
 }

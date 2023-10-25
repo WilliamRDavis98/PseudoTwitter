@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import com.team2.Assessment1.dtos.CredentialsDto;
+import com.team2.Assessment1.dtos.TweetResponseDto;
 import com.team2.Assessment1.dtos.UserRequestDto;
 import com.team2.Assessment1.dtos.UserResponseDto;
 import com.team2.Assessment1.entities.Credentials;
@@ -65,6 +66,15 @@ public class UserServiceImpl implements UserService {
 		userRepository.saveAndFlush(userToDelete.get());
 		return userMapper.entityToDto(userToDelete.get());
 		
+	}
+
+	@Override
+	public List<TweetResponseDto> getUserTweets(String username) {
+		Optional<User> userToReturn = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
+		if(userToReturn.isEmpty()) {
+			throw new NotFoundException("No user with username: " + username);
+		}
+		return tweetMapper.entitiesToDtos(userToReturn.get().getTweets());
 	}
 	
 	
