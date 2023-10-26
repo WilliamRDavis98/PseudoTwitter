@@ -11,8 +11,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.team2.Assessment1.dtos.CredentialsDto;
+import com.team2.Assessment1.dtos.HashtagDto;
 import com.team2.Assessment1.dtos.TweetRequestDto;
 import com.team2.Assessment1.dtos.TweetResponseDto;
+import com.team2.Assessment1.repositories.HashtagRepository;
 import com.team2.Assessment1.services.TweetService;
 
 //Import Services
@@ -51,4 +53,8 @@ public class TweetController {
 		return tweetService.deleteTweet(id, credentialsDto);
 	}
 
+	@GetMapping("/{id}/tags")
+	public List<HashtagDto> getTweetTags(@PathVariable Long id) {
+		return tweetService.getTweetTags(id);
+	}
 }

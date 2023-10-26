@@ -3,6 +3,7 @@ package com.team2.Assessment1.services;
 import java.util.List;
 
 import com.team2.Assessment1.dtos.CredentialsDto;
+import com.team2.Assessment1.dtos.HashtagDto;
 import com.team2.Assessment1.dtos.TweetRequestDto;
 import com.team2.Assessment1.dtos.TweetResponseDto;
 
@@ -17,4 +18,6 @@ public interface TweetService {
 	void likeTweet(Long id, CredentialsDto credentialsDto);
 
 	TweetResponseDto deleteTweet(Long id, CredentialsDto credentialsDto);
+
+	List<HashtagDto> getTweetTags(Long id);
 }

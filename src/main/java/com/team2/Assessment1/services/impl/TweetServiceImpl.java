@@ -6,12 +6,14 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import com.team2.Assessment1.dtos.CredentialsDto;
+import com.team2.Assessment1.dtos.HashtagDto;
 import com.team2.Assessment1.dtos.TweetRequestDto;
 import com.team2.Assessment1.dtos.TweetResponseDto;
 import com.team2.Assessment1.entities.Tweet;
 import com.team2.Assessment1.entities.User;
 import com.team2.Assessment1.exceptions.BadRequestException;
 import com.team2.Assessment1.exceptions.NotFoundException;
+import com.team2.Assessment1.mappers.HashtagMapper;
 import com.team2.Assessment1.mappers.TweetMapper;
 import com.team2.Assessment1.repositories.TweetRepository;
 import com.team2.Assessment1.repositories.UserRepository;
@@ -25,7 +27,8 @@ public class TweetServiceImpl implements TweetService {
 
 	// Mapper Declarations
 	private final TweetMapper tweetMapper;
-
+	private final HashtagMapper hashtagMapper;
+	
 	// Repository Declarations
 	private final TweetRepository tweetRepository;
 	private final UserRepository userRepository;
@@ -119,5 +122,20 @@ public class TweetServiceImpl implements TweetService {
 		deletedTweet.setDeleted(true);
 
 		return tweetMapper.entityToDto(tweetRepository.saveAndFlush(deletedTweet));
+	}
+
+	@Override
+	public List<HashtagDto> getTweetTags(Long id) {
+		Optional<Tweet> requestedTweet = tweetRepository.findById(id);
+
+		if (requestedTweet.isEmpty()) {
+			throw new NotFoundException("Tweet with id '" + id + "' not found");
+		}
+
+		if (requestedTweet.get().isDeleted()) {
+			throw new NotFoundException("Tweet with id '" + id + "' has been deleted");
+		}
+
+		return hashtagMapper.entitiesToDtos(requestedTweet.get().getTags());
 	}
 }
