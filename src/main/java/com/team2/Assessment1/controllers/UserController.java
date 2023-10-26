@@ -51,6 +51,11 @@ public class UserController {
 	public List<UserResponseDto> getFollowers(@PathVariable String username) {
 		return userService.getFollowers(username);
 	}
+	
+	@GetMapping("/@{username}/feed")
+	public List<TweetResponseDto> getFeed(@PathVariable String username){
+		return userService.getFeed(username);
+	}
 
 	@GetMapping("/@{username}")
 	public UserResponseDto getUser(@PathVariable String username) {

@@ -26,11 +26,16 @@ public class HashtagController {
 		return hashtagService.getAllHashtags();
 	}
 
-// TODO: Running into trouble with /#label endpoint. Problems: Checking if hashtag exist, checking which tweets contain hashtag, returning list of tweets
+
 	  @GetMapping("/{label}") 
 	  public List<TweetResponseDto> getTaggedTweets(@PathVariable String label){
 		  return hashtagService.getTaggedTweets(label);
 	  }
 	
 	 
+	  
+	  
+	  
+	  
+	  
 }
