@@ -189,4 +189,48 @@ public class UserServiceImpl implements UserService {
 
 	}
 
+	public List<TweetResponseDto> getMentions(String username) {
+		Optional<User> findUser = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
+
+		if (findUser.isEmpty() || findUser.get().isDeleted()) {
+			throw new BadRequestException("User not found or is deleted");
+		}
+
+		return tweetMapper.entitiesToDtos(findUser.get().getMentionedBy());
+	}
+
+	@Override
+	public List<UserResponseDto> getFollowedUsers(String username) {
+		Optional<User> findUser = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
+
+		if (findUser.isEmpty() || findUser.get().isDeleted()) {
+			throw new BadRequestException("User not found or is deleted");
+		}
+
+		User user = findUser.get();
+
+		List<User> followedUsers = user.getFollowing();
+
+		List<UserResponseDto> dtos = userMapper.entitiesToDtos(followedUsers);
+
+		return dtos;
+	}
+
+	@Override
+	public List<UserResponseDto> getFollowers(String username) {
+		Optional<User> findUser = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
+
+		if (findUser.isEmpty() || findUser.get().isDeleted()) {
+			throw new BadRequestException("User not found or is deleted");
+		}
+
+		User user = findUser.get();
+
+		List<User> followers = user.getFollowers();
+
+		List<UserResponseDto> dtos = userMapper.entitiesToDtos(followers);
+
+		return dtos;
+	}
+
 }

@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.team2.Assessment1.services.HashtagService;
 import com.team2.Assessment1.services.ValidateService;
 
 //Import Services
@@ -21,5 +22,11 @@ public class ValidateController {
 	public Boolean validateUsernameExists(@PathVariable String username) {
 		return validateService.validateUsernameExists(username);
 	}
+	
+	private final HashtagService hashtagService;
 
+	@GetMapping("/tag/exists/{label}")
+	public boolean doesTagExist(@PathVariable String label) {
+		return hashtagService.doesTagExist(label);
+	}
 }

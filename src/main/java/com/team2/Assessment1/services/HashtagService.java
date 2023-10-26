@@ -11,5 +11,6 @@ public interface HashtagService {
 
 	List<TweetResponseDto> getTaggedTweets(String label);
 
+	boolean doesTagExist(String label);
 
 }

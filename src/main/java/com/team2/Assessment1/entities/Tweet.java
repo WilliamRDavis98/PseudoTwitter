@@ -55,8 +55,8 @@ public class Tweet {
 	@ManyToMany
 	@JoinTable(
 			name = "tweet_hashtags", 
-			joinColumns = @JoinColumn(name = "hashtag_id"), 
-			inverseJoinColumns = @JoinColumn(name = "tweet_id")
+			joinColumns = @JoinColumn(name = "tweet_id"), 
+			inverseJoinColumns = @JoinColumn(name = "hashtag_id")
 			)
 	private List<Hashtag> tags;
 
@@ -64,6 +64,6 @@ public class Tweet {
 	private List<User> likedBy;
 
 	@ManyToMany
-	@JoinTable(name = "user_mentions", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "tweet_id"))
+	@JoinTable(name = "user_mentions", joinColumns = @JoinColumn(name = "tweet_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
 	private List<User> mentions;
 }

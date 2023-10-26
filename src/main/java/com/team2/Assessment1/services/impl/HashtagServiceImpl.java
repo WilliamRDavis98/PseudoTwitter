@@ -32,12 +32,11 @@ public class HashtagServiceImpl implements HashtagService {
 
 	@Override
 	public List<TweetResponseDto> getTaggedTweets(String label) {
-		Optional<Hashtag> hashtagToCheck = hashtagRepository.findByLabel(label);
-		if(!hashtagToCheck.isEmpty()) {
-			throw new NotFoundException("No hashtag with label: " + label);
-		}
-		return tweetMapper.entitiesToDtos(tweetRepository.findAll());
-		
+		return null;
+	}
+	
+	public boolean doesTagExist(String label) {
+		return hashtagRepository.findByLabel(label) != null;
 	}
 
 }
