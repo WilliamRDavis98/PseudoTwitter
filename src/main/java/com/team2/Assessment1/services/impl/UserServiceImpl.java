@@ -103,7 +103,7 @@ public class UserServiceImpl implements UserService {
 			throw new BadRequestException("Bad Request: Missing username/password in Credentials");
 		}
 		
-		if(userRepository.findByCredentialsUsernameAndDeletedFalse(userCredentials.getUsername()).isEmpty() && !user.isDeleted()) {
+		if(!userRepository.findByCredentialsUsernameAndDeletedFalse(userCredentials.getUsername()).isEmpty() && !user.isDeleted()) {
 			throw new BadRequestException("Bad Request: Username is already taken");
 		}
 		
@@ -112,6 +112,78 @@ public class UserServiceImpl implements UserService {
 		}
 		
 		return userMapper.entityToDto(userRepository.saveAndFlush(user)); 
+	}
+
+	@Override
+	public void followUser(String username, CredentialsDto credentialsDto) {
+		Credentials credentialsFollowingOther = credentialsMapper.dtoToEntity(credentialsDto);
+		Optional<User> userFollowingOther = userRepository.findByCredentialsAndDeletedFalse(credentialsFollowingOther);
+		Optional<User> userBeingFollowed = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
+		
+		//Empty Username or Password
+		if(credentialsFollowingOther.getUsername() == null || credentialsFollowingOther.getPassword() == null || credentialsFollowingOther.getUsername().isEmpty() || credentialsFollowingOther.getPassword().isEmpty()) {
+			throw new BadRequestException("Bad Request: Missing username/password in Credentials");
+		}		
+		
+		
+		//Credentails provided do not match an active user in database throw an error
+		if(userFollowingOther.isEmpty()) {
+			throw new NotFoundException("No user found with the username: " + credentialsFollowingOther.getUsername() + ", with the password: " + credentialsFollowingOther.getPassword());
+			
+		//No followable user exists throw an error (deleted or never created)
+		}else if(userBeingFollowed.isEmpty()) {
+			
+			throw new NotFoundException("No followable user found by the username: " + username);
+						
+		}
+		
+		//If User is Already following throw an error
+		if(userFollowingOther.get().getFollowing().contains(userBeingFollowed.get()) || userBeingFollowed.get().getFollowers().contains(userFollowingOther.get())) {
+			throw new BadRequestException("Bad Request: User is already followed");
+		}
+		
+		userFollowingOther.get().getFollowing().add(userBeingFollowed.get());
+		userBeingFollowed.get().getFollowers().add(userFollowingOther.get());
+		
+		userRepository.saveAndFlush(userBeingFollowed.get());
+		userRepository.saveAndFlush(userFollowingOther.get());
+		
+	}
+
+	@Override
+	public void unfollowUser(String username, CredentialsDto credentialsDto) {
+		Credentials credentialsUnfollowingOther = credentialsMapper.dtoToEntity(credentialsDto);
+		Optional<User> userUnfollowingOther = userRepository.findByCredentialsAndDeletedFalse(credentialsUnfollowingOther);
+		Optional<User> userBeingUnfollowed = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
+		
+		//Empty Username or Password
+		if(credentialsUnfollowingOther.getUsername() == null || credentialsUnfollowingOther.getPassword() == null || credentialsUnfollowingOther.getUsername().isEmpty() || credentialsUnfollowingOther.getPassword().isEmpty()) {
+			throw new BadRequestException("Bad Request: Missing username/password in Credentials");
+		}		
+		
+		
+		//Credentails provided do not match an active user in database throw an error
+		if(userUnfollowingOther.isEmpty()) {
+			throw new NotFoundException("No user found with the username: " + credentialsUnfollowingOther.getUsername() + ", with the password: " + credentialsUnfollowingOther.getPassword());
+			
+		//No unfollowable user exists throw an error (deleted or never created)
+		}else if(userBeingUnfollowed.isEmpty()) {
+			
+			throw new NotFoundException("Not following any user by the username: " + username);
+						
+		}
+		
+		//If User is Already following throw an error
+		if(!userUnfollowingOther.get().getFollowing().contains(userBeingUnfollowed.get()) || !userBeingUnfollowed.get().getFollowers().contains(userUnfollowingOther.get())) {
+			throw new BadRequestException("Bad Request: User is not being followed");
+		}
+		
+		userUnfollowingOther.get().getFollowing().remove(userBeingUnfollowed.get());
+		userBeingUnfollowed.get().getFollowers().remove(userUnfollowingOther.get());
+		
+		userRepository.saveAndFlush(userBeingUnfollowed.get());
+		userRepository.saveAndFlush(userUnfollowingOther.get());
+		
 	}
 	
 

@@ -17,6 +17,10 @@ public interface UserService {
 	UserResponseDto deleteUser(String username, CredentialsDto credentialsDto);
 
 	List<TweetResponseDto> getUserTweets(String username);
+
+	void followUser(String username, CredentialsDto credentialsDto);
+
+	void unfollowUser(String username, CredentialsDto credentialsDto);
 	
 
 //	ResponseEntity<List<TweetResponseDto>> getMentions(String username);
