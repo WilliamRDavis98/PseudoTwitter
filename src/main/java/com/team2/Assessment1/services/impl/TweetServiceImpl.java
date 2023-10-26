@@ -156,4 +156,19 @@ public class TweetServiceImpl implements TweetService {
 
 		return userMapper.entitiesToDtos(requestedTweet.get().getLikedBy());
 	}
+
+	@Override
+	public List<TweetResponseDto> getTweetReplies(Long id) {
+		Optional<Tweet> requestedTweet = tweetRepository.findById(id);
+
+		if (requestedTweet.isEmpty()) {
+			throw new NotFoundException("Tweet with id '" + id + "' not found");
+		}
+
+		if (requestedTweet.get().isDeleted()) {
+			throw new NotFoundException("Tweet with id '" + id + "' has been deleted");
+		}
+
+		return tweetMapper.entitiesToDtos(requestedTweet.get().getReplies());
+	}
 }
