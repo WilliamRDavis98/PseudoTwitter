@@ -14,6 +14,7 @@ import com.team2.Assessment1.dtos.CredentialsDto;
 import com.team2.Assessment1.dtos.HashtagDto;
 import com.team2.Assessment1.dtos.TweetRequestDto;
 import com.team2.Assessment1.dtos.TweetResponseDto;
+import com.team2.Assessment1.dtos.UserResponseDto;
 import com.team2.Assessment1.repositories.HashtagRepository;
 import com.team2.Assessment1.services.TweetService;
 
@@ -56,5 +57,10 @@ public class TweetController {
 	@GetMapping("/{id}/tags")
 	public List<HashtagDto> getTweetTags(@PathVariable Long id) {
 		return tweetService.getTweetTags(id);
+	}
+	
+	@GetMapping("/{id}/likes")
+	public List<UserResponseDto> getTweetLikes(@PathVariable Long id) {
+		return tweetService.getTweetLikes(id);
 	}
 }

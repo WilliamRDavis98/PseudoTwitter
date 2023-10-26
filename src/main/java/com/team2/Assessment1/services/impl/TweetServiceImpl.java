@@ -9,12 +9,14 @@ import com.team2.Assessment1.dtos.CredentialsDto;
 import com.team2.Assessment1.dtos.HashtagDto;
 import com.team2.Assessment1.dtos.TweetRequestDto;
 import com.team2.Assessment1.dtos.TweetResponseDto;
+import com.team2.Assessment1.dtos.UserResponseDto;
 import com.team2.Assessment1.entities.Tweet;
 import com.team2.Assessment1.entities.User;
 import com.team2.Assessment1.exceptions.BadRequestException;
 import com.team2.Assessment1.exceptions.NotFoundException;
 import com.team2.Assessment1.mappers.HashtagMapper;
 import com.team2.Assessment1.mappers.TweetMapper;
+import com.team2.Assessment1.mappers.UserMapper;
 import com.team2.Assessment1.repositories.TweetRepository;
 import com.team2.Assessment1.repositories.UserRepository;
 import com.team2.Assessment1.services.TweetService;
@@ -28,6 +30,7 @@ public class TweetServiceImpl implements TweetService {
 	// Mapper Declarations
 	private final TweetMapper tweetMapper;
 	private final HashtagMapper hashtagMapper;
+	private final UserMapper userMapper;
 	
 	// Repository Declarations
 	private final TweetRepository tweetRepository;
@@ -137,5 +140,20 @@ public class TweetServiceImpl implements TweetService {
 		}
 
 		return hashtagMapper.entitiesToDtos(requestedTweet.get().getTags());
+	}
+
+	@Override
+	public List<UserResponseDto> getTweetLikes(Long id) {
+		Optional<Tweet> requestedTweet = tweetRepository.findById(id);
+
+		if (requestedTweet.isEmpty()) {
+			throw new NotFoundException("Tweet with id '" + id + "' not found");
+		}
+
+		if (requestedTweet.get().isDeleted()) {
+			throw new NotFoundException("Tweet with id '" + id + "' has been deleted");
+		}
+
+		return userMapper.entitiesToDtos(requestedTweet.get().getLikedBy());
 	}
 }
