@@ -2,6 +2,7 @@ package com.team2.Assessment1.services;
 
 import java.util.List;
 
+import com.team2.Assessment1.dtos.ContextDto;
 import com.team2.Assessment1.dtos.CredentialsDto;
 import com.team2.Assessment1.dtos.HashtagDto;
 import com.team2.Assessment1.dtos.TweetRequestDto;
@@ -25,4 +26,6 @@ public interface TweetService {
 	List<UserResponseDto> getTweetLikes(Long id);
 
 	List<TweetResponseDto> getTweetReplies(Long id);
+
+	ContextDto getTweetContext(Long id);
 }
