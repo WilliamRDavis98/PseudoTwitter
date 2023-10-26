@@ -29,14 +29,13 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-	
+
 	// Mapper declarations
 	private final UserMapper userMapper;
 	private final TweetMapper tweetMapper;
 	private final HashtagMapper hashtagMapper;
 	private final CredentialsMapper credentialsMapper;
 
-	
 	// Repository declarations
 	private final UserRepository userRepository;
 	private final TweetRepository tweetRepository;
@@ -45,7 +44,7 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public UserResponseDto getUser(String username) {
 		Optional<User> userToReturn = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
-		if(userToReturn.isEmpty()) {
+		if (userToReturn.isEmpty()) {
 			throw new NotFoundException("No user with username: " + username);
 		}
 		return userMapper.entityToDto(userToReturn.get());
@@ -61,57 +60,54 @@ public class UserServiceImpl implements UserService {
 		if (!userToDelete.get().getCredentials().getPassword().equals(submittedCredentials.getPassword())) {
 			throw new NotAuthorizedException("Incorrect Password");
 		}
-		
+
 		userToDelete.get().setDeleted(true);
 		userRepository.saveAndFlush(userToDelete.get());
 		return userMapper.entityToDto(userToDelete.get());
-		
+
 	}
 
 	@Override
 	public List<TweetResponseDto> getUserTweets(String username) {
 		Optional<User> userToReturn = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
-		if(userToReturn.isEmpty()) {
+		if (userToReturn.isEmpty()) {
 			throw new NotFoundException("No user with username: " + username);
 		}
 		return tweetMapper.entitiesToDtos(userToReturn.get().getTweets());
 	}
-	
-	
-	
-	
+
 	@Override
 	public List<UserResponseDto> getAllUsers() {
 		// TODO Auto-generated method stub
 		return userMapper.entitiesToDtos(userRepository.findAllByDeletedFalse());
 	}
-	
+
 	@Override
 	public UserResponseDto createUser(UserRequestDto userRequestDto) {
 		User user = userMapper.dtoToEntity(userRequestDto);
-		
+
 		Credentials userCredentials = user.getCredentials();
 		Profile userProfile = user.getProfile();
 
-		
-		// Error Handling for BadRequestException	
-		if(userProfile.getEmail() == null) {
+		// Error Handling for BadRequestException
+		if (userProfile.getEmail() == null) {
 			throw new BadRequestException("Bad Request: No email in Profile");
 		}
-		
-		if(userCredentials.getPassword() == null || userCredentials.getUsername() == null) {
+
+		if (userCredentials.getPassword() == null || userCredentials.getUsername() == null) {
 			throw new BadRequestException("Bad Request: Missing username/password in Credentials");
 		}
-		
-		if(!userRepository.findByCredentialsUsernameAndDeletedFalse(userCredentials.getUsername()).isEmpty() && !user.isDeleted()) {
+
+		if (!userRepository.findByCredentialsUsernameAndDeletedFalse(userCredentials.getUsername()).isEmpty()
+				&& !user.isDeleted()) {
 			throw new BadRequestException("Bad Request: Username is already taken");
 		}
-		
-		if(user.isDeleted()) {
+
+		if (user.isDeleted()) {
 			user.setDeleted(false);
 		}
-		
-		return userMapper.entityToDto(userRepository.saveAndFlush(user)); 
+
+		return userMapper.entityToDto(userRepository.saveAndFlush(user));
 	}
 
 	@Override
@@ -119,112 +115,78 @@ public class UserServiceImpl implements UserService {
 		Credentials credentialsFollowingOther = credentialsMapper.dtoToEntity(credentialsDto);
 		Optional<User> userFollowingOther = userRepository.findByCredentialsAndDeletedFalse(credentialsFollowingOther);
 		Optional<User> userBeingFollowed = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
-		
-		//Empty Username or Password
-		if(credentialsFollowingOther.getUsername() == null || credentialsFollowingOther.getPassword() == null || credentialsFollowingOther.getUsername().isEmpty() || credentialsFollowingOther.getPassword().isEmpty()) {
+
+		// Empty Username or Password
+		if (credentialsFollowingOther.getUsername() == null || credentialsFollowingOther.getPassword() == null
+				|| credentialsFollowingOther.getUsername().isEmpty()
+				|| credentialsFollowingOther.getPassword().isEmpty()) {
 			throw new BadRequestException("Bad Request: Missing username/password in Credentials");
-		}		
-		
-		
-		//Credentails provided do not match an active user in database throw an error
-		if(userFollowingOther.isEmpty()) {
-			throw new NotFoundException("No user found with the username: " + credentialsFollowingOther.getUsername() + ", with the password: " + credentialsFollowingOther.getPassword());
-			
-		//No followable user exists throw an error (deleted or never created)
-		}else if(userBeingFollowed.isEmpty()) {
-			
-			throw new NotFoundException("No followable user found by the username: " + username);
-						
 		}
-		
-		//If User is Already following throw an error
-		if(userFollowingOther.get().getFollowing().contains(userBeingFollowed.get()) || userBeingFollowed.get().getFollowers().contains(userFollowingOther.get())) {
+
+		// Credentails provided do not match an active user in database throw an error
+		if (userFollowingOther.isEmpty()) {
+			throw new NotFoundException("No user found with the username: " + credentialsFollowingOther.getUsername()
+					+ ", with the password: " + credentialsFollowingOther.getPassword());
+
+			// No followable user exists throw an error (deleted or never created)
+		} else if (userBeingFollowed.isEmpty()) {
+
+			throw new NotFoundException("No followable user found by the username: " + username);
+
+		}
+
+		// If User is Already following throw an error
+		if (userFollowingOther.get().getFollowing().contains(userBeingFollowed.get())
+				|| userBeingFollowed.get().getFollowers().contains(userFollowingOther.get())) {
 			throw new BadRequestException("Bad Request: User is already followed");
 		}
-		
+
 		userFollowingOther.get().getFollowing().add(userBeingFollowed.get());
 		userBeingFollowed.get().getFollowers().add(userFollowingOther.get());
-		
+
 		userRepository.saveAndFlush(userBeingFollowed.get());
 		userRepository.saveAndFlush(userFollowingOther.get());
-		
+
 	}
 
 	@Override
 	public void unfollowUser(String username, CredentialsDto credentialsDto) {
 		Credentials credentialsUnfollowingOther = credentialsMapper.dtoToEntity(credentialsDto);
-		Optional<User> userUnfollowingOther = userRepository.findByCredentialsAndDeletedFalse(credentialsUnfollowingOther);
+		Optional<User> userUnfollowingOther = userRepository
+				.findByCredentialsAndDeletedFalse(credentialsUnfollowingOther);
 		Optional<User> userBeingUnfollowed = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
-		
-		//Empty Username or Password
-		if(credentialsUnfollowingOther.getUsername() == null || credentialsUnfollowingOther.getPassword() == null || credentialsUnfollowingOther.getUsername().isEmpty() || credentialsUnfollowingOther.getPassword().isEmpty()) {
+
+		// Empty Username or Password
+		if (credentialsUnfollowingOther.getUsername() == null || credentialsUnfollowingOther.getPassword() == null
+				|| credentialsUnfollowingOther.getUsername().isEmpty()
+				|| credentialsUnfollowingOther.getPassword().isEmpty()) {
 			throw new BadRequestException("Bad Request: Missing username/password in Credentials");
-		}		
-		
-		
-		//Credentails provided do not match an active user in database throw an error
-		if(userUnfollowingOther.isEmpty()) {
-			throw new NotFoundException("No user found with the username: " + credentialsUnfollowingOther.getUsername() + ", with the password: " + credentialsUnfollowingOther.getPassword());
-			
-		//No unfollowable user exists throw an error (deleted or never created)
-		}else if(userBeingUnfollowed.isEmpty()) {
-			
-			throw new NotFoundException("Not following any user by the username: " + username);
-						
 		}
-		
-		//If User is Already following throw an error
-		if(!userUnfollowingOther.get().getFollowing().contains(userBeingUnfollowed.get()) || !userBeingUnfollowed.get().getFollowers().contains(userUnfollowingOther.get())) {
+
+		// Credentails provided do not match an active user in database throw an error
+		if (userUnfollowingOther.isEmpty()) {
+			throw new NotFoundException("No user found with the username: " + credentialsUnfollowingOther.getUsername()
+					+ ", with the password: " + credentialsUnfollowingOther.getPassword());
+
+			// No unfollowable user exists throw an error (deleted or never created)
+		} else if (userBeingUnfollowed.isEmpty()) {
+
+			throw new NotFoundException("Not following any user by the username: " + username);
+
+		}
+
+		// If User is Already following throw an error
+		if (!userUnfollowingOther.get().getFollowing().contains(userBeingUnfollowed.get())
+				|| !userBeingUnfollowed.get().getFollowers().contains(userUnfollowingOther.get())) {
 			throw new BadRequestException("Bad Request: User is not being followed");
 		}
-		
+
 		userUnfollowingOther.get().getFollowing().remove(userBeingUnfollowed.get());
 		userBeingUnfollowed.get().getFollowers().remove(userUnfollowingOther.get());
-		
+
 		userRepository.saveAndFlush(userBeingUnfollowed.get());
 		userRepository.saveAndFlush(userUnfollowingOther.get());
-		
-	}
-	
 
-	
-//	@Override
-//	public ResponseEntity<List<TweetResponseDto>> getMentions(String username) {
-//		return null;
-//		return new ResponseEntity<>(tweetMapper.entitiesToDtos(tweetRepository.findMentionsByUsername(username)), HttpStatus.OK);
-//	}
-//
-//	@Override
-//	public ResponseEntity<List<UserResponseDto>> getFollowedUsers(String username) {
-//		User user = userRepository.findByUsername(username);
-//		if(user == null) {
-//			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-//		}
-//		
-//		List<User> followedUsers = user.getFollowing().stream().filter(User::isActive).collect(Collectors.toList());
-//		
-//		List<UserResponseDto> dtos = userMapper.entitiesToDtos(followedUsers);
-//				
-//		
-//		return new ResponseEntity<>(dtos, HttpStatus.OK);
-//		
-//		return null;
-//	}
-//
-//	@Override
-//	public ResponseEntity<List<UserResponseDto>> getFollowers(String username) {
-//		User user = userRepository.findByUsername(username);
-//		if(user == null) {
-//			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-//		}
-//		
-//		List<User> followers = user.getFollowers().stream().filter(User::isActive).collect(Collectors.toList());
-//		
-//		List<UserResponseDto> dtos = userMapper.entitiesToDtos(followers);
-//				
-//		
-//		return new ResponseEntity<>(dtos, HttpStatus.OK);
-//		return null;
-//	}
+	}
 
 }

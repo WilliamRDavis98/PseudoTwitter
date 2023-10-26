@@ -21,12 +21,4 @@ public interface UserService {
 	void followUser(String username, CredentialsDto credentialsDto);
 
 	void unfollowUser(String username, CredentialsDto credentialsDto);
-	
-
-//	ResponseEntity<List<TweetResponseDto>> getMentions(String username);
-//
-//	ResponseEntity<List<UserResponseDto>> getFollowedUsers(String username);
-//
-//	ResponseEntity<List<UserResponseDto>> getFollowers(String username);
-
 }
