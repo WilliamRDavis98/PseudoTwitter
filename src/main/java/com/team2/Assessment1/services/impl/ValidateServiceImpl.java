@@ -10,21 +10,20 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class ValidateServiceImpl implements ValidateService {
-	
+
 	private final UserRepository userRepository;
-	
+
 	/*************************************
 	 * GET Methods
 	 *************************************/
-	@Override	
-	public Boolean validateUsernameExists(String username) {
-		
-		return userRepository.existsByCredentialsUsername(username);
-	}
-
 	@Override
 	public Boolean validateUsernameAvailable(String username) {
 		return !userRepository.existsByCredentialsUsernameAndDeletedFalse(username);
 	}
 
+	@Override
+	public Boolean validateUsernameExists(String username) {
+
+		return userRepository.existsByCredentialsUsername(username);
+	}
 }

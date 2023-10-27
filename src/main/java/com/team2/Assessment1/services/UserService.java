@@ -16,9 +16,11 @@ public interface UserService {
 	
 	UserResponseDto getUser(String username);
 	
-	List<UserResponseDto> getFollowedUsers(String username);
+	List<TweetResponseDto> getFeed(String username);
 	
 	List<UserResponseDto> getFollowers(String username);
+
+	List<UserResponseDto> getFollowedUsers(String username);
 	
 	List<TweetResponseDto> getMentions(String username);
 	
@@ -29,6 +31,8 @@ public interface UserService {
 	 ************************************/
 	UserResponseDto createUser(UserRequestDto userRequestDto);
 	
+	UserResponseDto patchUser(String username, UserRequestDto userRequestDto);
+	
 	void followUser(String username, CredentialsDto credentialsDto);
 	
 	void unfollowUser(String username, CredentialsDto credentialsDto);
@@ -38,7 +42,4 @@ public interface UserService {
 	 ************************************/
 	UserResponseDto deleteUser(String username, CredentialsDto credentialsDto);
 
-	List<TweetResponseDto> getFeed(String username);
-
-	UserResponseDto patchUser(String username, UserRequestDto userRequestDto);
 }

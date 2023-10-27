@@ -20,8 +20,6 @@ import com.team2.Assessment1.dtos.TweetResponseDto;
 import com.team2.Assessment1.dtos.UserResponseDto;
 import com.team2.Assessment1.services.TweetService;
 
-//Import Services
-
 import lombok.RequiredArgsConstructor;
 
 @RestController

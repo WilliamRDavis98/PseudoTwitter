@@ -21,15 +21,13 @@ public interface TweetService {
 	ContextDto getTweetContext(Long id);
 
 	List<UserResponseDto> getTweetLikes(Long id);
+	
+	List<UserResponseDto> getMentionedUsers(Long id);
 
 	List<TweetResponseDto> getTweetReplies(Long id);
 
 	List<TweetResponseDto> getTweetReposts(Long id);
 
-	List<UserResponseDto> getMentionedUsers(Long id);
-
-	TweetResponseDto replyTweet(Long id, TweetRequestDto tweetRequestDto);
-	TweetResponseDto repostTweet(Long id, CredentialsDto credentialsDto);
 	List<HashtagDto> getTweetTags(Long id);
 
 	/************************************
@@ -38,6 +36,10 @@ public interface TweetService {
 	TweetResponseDto createTweet(TweetRequestDto tweetRequestDto);
 
 	void likeTweet(Long id, CredentialsDto credentialsDto);
+	
+	TweetResponseDto replyTweet(Long id, TweetRequestDto tweetRequestDto);
+
+	TweetResponseDto repostTweet(Long id, CredentialsDto credentialsDto);
 
 	/************************************
 	 * DELETE Methods

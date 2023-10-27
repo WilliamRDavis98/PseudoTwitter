@@ -5,8 +5,7 @@ public interface ValidateService {
 	/*************************************
 	 * GET Methods
 	 *************************************/
-	Boolean validateUsernameExists(String username);
-
 	Boolean validateUsernameAvailable(String username);
 
+	Boolean validateUsernameExists(String username);
 }

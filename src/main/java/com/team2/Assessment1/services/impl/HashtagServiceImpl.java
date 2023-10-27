@@ -23,11 +23,19 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class HashtagServiceImpl implements HashtagService {
+	
+	// Mapper Declarations
 	private final HashtagMapper hashtagMapper;
-	private final HashtagRepository hashtagRepository;
 	private final TweetMapper tweetMapper;
+	
+	// Repository Declarations
+	private final HashtagRepository hashtagRepository;
 	private final TweetRepository tweetRepository;
 
+	
+	/************************************
+	 * GET Methods
+	 ************************************/
 	@Override
 	public boolean doesTagExist(String label) {
 		return hashtagRepository.findByLabel(label) != null;
@@ -40,7 +48,7 @@ public class HashtagServiceImpl implements HashtagService {
 
 	@Override
 	public List<TweetResponseDto> getTaggedTweets(String label) {
-		Hashtag searchedTag = hashtagRepository.findByLabel("#" + label);
+		Hashtag searchedTag = hashtagRepository.findByLabel(label);
 		Optional<Hashtag> checkTag = Optional.ofNullable(searchedTag);
 
 		if (checkTag.isEmpty()) {
