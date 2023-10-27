@@ -42,7 +42,16 @@ public class UserServiceImpl implements UserService {
 	private final UserRepository userRepository;
 	private final TweetRepository tweetRepository;
 	private final HashtagRepository hashtagRepository;
-
+	
+	/************************************
+	 * GET Methods
+	 ************************************/
+	@Override
+	public List<UserResponseDto> getAllUsers() {
+		// TODO Auto-generated method stub
+		return userMapper.entitiesToDtos(userRepository.findAllByDeletedFalse());
+	}
+	
 	@Override
 	public UserResponseDto getUser(String username) {
 		Optional<User> userToReturn = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
@@ -51,24 +60,51 @@ public class UserServiceImpl implements UserService {
 		}
 		return userMapper.entityToDto(userToReturn.get());
 	}
-
+	
 	@Override
-	public UserResponseDto deleteUser(String username, CredentialsDto credentialsDto) {
-		Optional<User> userToDelete = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
-		if (userToDelete.isEmpty()) {
-			throw new NotFoundException("No user with username: " + username);
-		}
-		Credentials submittedCredentials = credentialsMapper.dtoToEntity(credentialsDto);
-		if (!userToDelete.get().getCredentials().getPassword().equals(submittedCredentials.getPassword())) {
-			throw new NotAuthorizedException("Incorrect Password");
+	public List<UserResponseDto> getFollowedUsers(String username) {
+		Optional<User> findUser = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
+
+		if (findUser.isEmpty() || findUser.get().isDeleted()) {
+			throw new BadRequestException("User not found or is deleted");
 		}
 
-		userToDelete.get().setDeleted(true);
-		userRepository.saveAndFlush(userToDelete.get());
-		return userMapper.entityToDto(userToDelete.get());
+		User user = findUser.get();
 
+		List<User> followedUsers = user.getFollowing();
+
+		List<UserResponseDto> dtos = userMapper.entitiesToDtos(followedUsers);
+
+		return dtos;
 	}
 
+	@Override
+	public List<UserResponseDto> getFollowers(String username) {
+		Optional<User> findUser = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
+
+		if (findUser.isEmpty() || findUser.get().isDeleted()) {
+			throw new BadRequestException("User not found or is deleted");
+		}
+
+		User user = findUser.get();
+
+		List<User> followers = user.getFollowers();
+
+		List<UserResponseDto> dtos = userMapper.entitiesToDtos(followers);
+
+		return dtos;
+	}
+	
+	public List<TweetResponseDto> getMentions(String username) {
+		Optional<User> findUser = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
+
+		if (findUser.isEmpty() || findUser.get().isDeleted()) {
+			throw new BadRequestException("User not found or is deleted");
+		}
+
+		return tweetMapper.entitiesToDtos(findUser.get().getMentionedBy());
+	}
+	
 	@Override
 	public List<TweetResponseDto> getUserTweets(String username) {
 		Optional<User> userToReturn = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
@@ -77,22 +113,25 @@ public class UserServiceImpl implements UserService {
 		}
 		return tweetMapper.entitiesToDtos(userToReturn.get().getTweets());
 	}
-
-	@Override
-	public List<UserResponseDto> getAllUsers() {
-		// TODO Auto-generated method stub
-		return userMapper.entitiesToDtos(userRepository.findAllByDeletedFalse());
-	}
-
+	
+	/************************************
+	 * POST Methods
+	 ************************************/
 	@Override
 	public UserResponseDto createUser(UserRequestDto userRequestDto) {
-		User user = userMapper.dtoToEntity(userRequestDto);
-
-		Credentials userCredentials = user.getCredentials();
-		Profile userProfile = user.getProfile();
-
 		// Error Handling for BadRequestException
-		if (userProfile.getEmail() == null) {
+		if(userRequestDto.getCredentials() == null && userRequestDto.getProfile() == null) {
+			throw new BadRequestException("Bad Request: Request Body is empty");
+		} else if(userRequestDto.getCredentials() == null) {
+			throw new BadRequestException("Bad Request: No User Credentials");
+		} else if(userRequestDto.getProfile() == null) {
+			throw new BadRequestException("Bad Request: No User Profile");
+		}
+		
+		User user = userMapper.dtoToEntity(userRequestDto);
+		Credentials userCredentials = user.getCredentials();
+		
+		if (user.getProfile().getEmail() == null) {
 			throw new BadRequestException("Bad Request: No email in Profile");
 		}
 
@@ -105,8 +144,13 @@ public class UserServiceImpl implements UserService {
 			throw new BadRequestException("Bad Request: Username is already taken");
 		}
 
-		if (user.isDeleted()) {
-			user.setDeleted(false);
+		Optional<User> findUser = userRepository.findByCredentialsUsername(userCredentials.getUsername());
+		
+		if(!findUser.isEmpty()) {
+			if (findUser.get().isDeleted()) {
+				user = findUser.get();
+				user.setDeleted(false);
+			}
 		}
 
 		return userMapper.entityToDto(userRepository.saveAndFlush(user));
@@ -190,50 +234,30 @@ public class UserServiceImpl implements UserService {
 		userRepository.saveAndFlush(userUnfollowingOther.get());
 
 	}
-
-	public List<TweetResponseDto> getMentions(String username) {
-		Optional<User> findUser = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
-
-		if (findUser.isEmpty() || findUser.get().isDeleted()) {
-			throw new BadRequestException("User not found or is deleted");
-		}
-
-		return tweetMapper.entitiesToDtos(findUser.get().getMentionedBy());
-	}
-
+	
+	/************************************
+	 * DELETE Methods
+	 ************************************/
 	@Override
-	public List<UserResponseDto> getFollowedUsers(String username) {
-		Optional<User> findUser = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
-
-		if (findUser.isEmpty() || findUser.get().isDeleted()) {
-			throw new BadRequestException("User not found or is deleted");
+	public UserResponseDto deleteUser(String username, CredentialsDto credentialsDto) {
+		Optional<User> userToDelete = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
+		if (userToDelete.isEmpty()) {
+			throw new NotFoundException("No user with username: " + username);
+		}
+		Credentials submittedCredentials = credentialsMapper.dtoToEntity(credentialsDto);
+		if (!userToDelete.get().getCredentials().getPassword().equals(submittedCredentials.getPassword())) {
+			throw new NotAuthorizedException("Incorrect Password");
 		}
 
-		User user = findUser.get();
+		userToDelete.get().setDeleted(true);
+		userRepository.saveAndFlush(userToDelete.get());
+		return userMapper.entityToDto(userToDelete.get());
 
-		List<User> followedUsers = user.getFollowing();
-
-		List<UserResponseDto> dtos = userMapper.entitiesToDtos(followedUsers);
-
-		return dtos;
 	}
-
-	@Override
-	public List<UserResponseDto> getFollowers(String username) {
-		Optional<User> findUser = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
-
-		if (findUser.isEmpty() || findUser.get().isDeleted()) {
-			throw new BadRequestException("User not found or is deleted");
-		}
-
-		User user = findUser.get();
-
-		List<User> followers = user.getFollowers();
-
-		List<UserResponseDto> dtos = userMapper.entitiesToDtos(followers);
-
-		return dtos;
-	}
+	
+	/************************************
+	 * Helper Methods
+	 ************************************/
 
 	@Override
 	public List<TweetResponseDto> getFeed(String username) {		

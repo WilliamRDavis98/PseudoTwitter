@@ -2,12 +2,14 @@ package com.team2.Assessment1.controllers;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.team2.Assessment1.dtos.ContextDto;
@@ -16,7 +18,6 @@ import com.team2.Assessment1.dtos.HashtagDto;
 import com.team2.Assessment1.dtos.TweetRequestDto;
 import com.team2.Assessment1.dtos.TweetResponseDto;
 import com.team2.Assessment1.dtos.UserResponseDto;
-import com.team2.Assessment1.repositories.HashtagRepository;
 import com.team2.Assessment1.services.TweetService;
 
 //Import Services
@@ -30,68 +31,94 @@ public class TweetController {
 	
 	private final TweetService tweetService;
 
+	/************************************
+	 * GET Mappings
+	 ************************************/
 	@GetMapping
+	@ResponseStatus(HttpStatus.OK)
 	public List<TweetResponseDto> getAllTweets() {
 		return tweetService.getAllTweets();
 	}
 	
 	@GetMapping("/{id}")
+	@ResponseStatus(HttpStatus.OK)
 	public TweetResponseDto getTweet(@PathVariable Long id) {
 		return tweetService.getTweet(id);
 	}
-	
-	@PostMapping
-	public TweetResponseDto createTweet(@RequestBody TweetRequestDto tweetRequestDto) {
-		return tweetService.createTweet(tweetRequestDto);
-	}
-	
-	@PostMapping("/{id}/reply")
-	public TweetResponseDto replyTweet(@PathVariable Long id, @RequestBody TweetRequestDto tweetRequestDto ) {
-		return tweetService.replyTweet(id,tweetRequestDto);
-	}
-	
-	@PostMapping("/{id}/like")
-	public void likeTweet(@PathVariable Long id, @RequestBody CredentialsDto credentialsDto) {
-		tweetService.likeTweet(id, credentialsDto);
-	}
-	
-	@PostMapping("/{id}/repost")
-	public TweetResponseDto repostTweet(@PathVariable Long id, @RequestBody CredentialsDto credentialsDto) {
-		return tweetService.repostTweet(id, credentialsDto);
-	}
-	
-	@DeleteMapping("/{id}")
-	public TweetResponseDto deleteTweet(@PathVariable Long id, @RequestBody CredentialsDto credentialsDto) {
-		return tweetService.deleteTweet(id, credentialsDto);
-	}
 
-	@GetMapping("/{id}/tags")
-	public List<HashtagDto> getTweetTags(@PathVariable Long id) {
-		return tweetService.getTweetTags(id);
+	
+	@GetMapping("/{id}/context")
+	@ResponseStatus(HttpStatus.OK)
+	public ContextDto getTweetContext(@PathVariable Long id) {
+		return tweetService.getTweetContext(id);
 	}
 	
 	@GetMapping("/{id}/likes")
+	@ResponseStatus(HttpStatus.OK)
 	public List<UserResponseDto> getTweetLikes(@PathVariable Long id) {
 		return tweetService.getTweetLikes(id);
 	}
 	
 	@GetMapping("/{id}/mentions")
+	@ResponseStatus(HttpStatus.OK)
 	public List<UserResponseDto> getMentionedUsers(@PathVariable Long id){
 		return tweetService.getMentionedUsers(id);
 	}
 	
 	@GetMapping("/{id}/replies")
+	@ResponseStatus(HttpStatus.OK)
 	public List<TweetResponseDto> getTweetReplies(@PathVariable Long id) {
 		return tweetService.getTweetReplies(id);
 	}
 	
 	@GetMapping("/{id}/reposts")
+	@ResponseStatus(HttpStatus.OK)
 	public List<TweetResponseDto> getTweetReposts(@PathVariable Long id){
 		return tweetService.getTweetReposts(id);
 	}
 	
-	@GetMapping("/{id}/context")
-	public ContextDto getTweetContext(@PathVariable Long id) {
-		return tweetService.getTweetContext(id);
+	@GetMapping("/{id}/tags")
+	@ResponseStatus(HttpStatus.OK)
+	public List<HashtagDto> getTweetTags(@PathVariable Long id) {
+		return tweetService.getTweetTags(id);
 	}
+
+	/*************************************
+	 * POST Mappings
+	 *************************************/
+	@PostMapping
+	@ResponseStatus(HttpStatus.CREATED)
+	public TweetResponseDto createTweet(@RequestBody TweetRequestDto tweetRequestDto) {
+		return tweetService.createTweet(tweetRequestDto);
+	}
+	
+	@PostMapping("/{id}/like")
+	@ResponseStatus(HttpStatus.CREATED)
+	public void likeTweet(@PathVariable Long id, @RequestBody CredentialsDto credentialsDto) {
+		tweetService.likeTweet(id, credentialsDto);
+	}
+	
+	
+	@PostMapping("/{id}/reply")
+	@ResponseStatus(HttpStatus.CREATED)
+	public TweetResponseDto replyTweet(@PathVariable Long id, @RequestBody TweetRequestDto tweetRequestDto ) {
+		return tweetService.replyTweet(id,tweetRequestDto);
+	}
+
+	
+	@PostMapping("/{id}/repost")
+	@ResponseStatus(HttpStatus.CREATED)
+	public TweetResponseDto repostTweet(@PathVariable Long id, @RequestBody CredentialsDto credentialsDto) {
+		return tweetService.repostTweet(id, credentialsDto);
+	}
+	
+	/*************************************
+	 * DELETE Mappings
+	 *************************************/
+	@DeleteMapping("/{id}")
+	@ResponseStatus(HttpStatus.OK)
+	public TweetResponseDto deleteTweet(@PathVariable Long id, @RequestBody CredentialsDto credentialsDto) {
+		return tweetService.deleteTweet(id, credentialsDto);
+	}
+
 }

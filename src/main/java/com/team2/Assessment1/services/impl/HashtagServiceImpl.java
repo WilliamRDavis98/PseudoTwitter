@@ -29,6 +29,11 @@ public class HashtagServiceImpl implements HashtagService {
 	private final TweetRepository tweetRepository;
 
 	@Override
+	public boolean doesTagExist(String label) {
+		return hashtagRepository.findByLabel(label) != null;
+	}
+
+	@Override
 	public List<HashtagDto> getAllHashtags() {
 		return hashtagMapper.entitiesToDtos(hashtagRepository.findAll());
 	}
@@ -53,10 +58,6 @@ public class HashtagServiceImpl implements HashtagService {
 
 		Collections.sort(taggedTweets, (y, x) -> x.getPosted().compareTo(y.getPosted()));
 		return tweetMapper.entitiesToDtos(taggedTweets);
-	}
-
-	public boolean doesTagExist(String label) {
-		return hashtagRepository.findByLabel(label) != null;
 	}
 
 }

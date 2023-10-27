@@ -13,6 +13,9 @@ public class ValidateServiceImpl implements ValidateService {
 	
 	private final UserRepository userRepository;
 	
+	/*************************************
+	 * GET Methods
+	 *************************************/
 	@Override	
 	public Boolean validateUsernameExists(String username) {
 		

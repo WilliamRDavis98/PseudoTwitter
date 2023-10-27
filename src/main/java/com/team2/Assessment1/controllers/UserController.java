@@ -28,21 +28,19 @@ public class UserController {
 
 	private final UserService userService;
 
+	/************************************
+	 * GET Mappings
+	 ************************************/
 	@GetMapping
 	public List<UserResponseDto> getAllUsers() {
 		return userService.getAllUsers();
 	}
-
-	@PostMapping
-	public UserResponseDto createUser(@RequestBody UserRequestDto userRequestDto) {
-		return userService.createUser(userRequestDto);
+	
+	@GetMapping("/@{username}")
+	public UserResponseDto getUser(@PathVariable String username) {
+		return userService.getUser(username);
 	}
-
-	@GetMapping("/@{username}/mentions")
-	public List<TweetResponseDto> getMentions(@PathVariable String username) {
-		return userService.getMentions(username);
-	}
-
+	
 	@GetMapping("/@{username}/following")
 	public List<UserResponseDto> getFollowedUsers(@PathVariable String username) {
 		return userService.getFollowedUsers(username);
@@ -58,35 +56,46 @@ public class UserController {
 		return userService.getFeed(username);
 	}
 
-	@GetMapping("/@{username}")
-	public UserResponseDto getUser(@PathVariable String username) {
-		return userService.getUser(username);
-	}
-	
-	@PostMapping("/@{username}/follow")
-	public void followUser(@PathVariable String username, @RequestBody CredentialsDto credentialsDto ) {
-		userService.followUser(username,credentialsDto);
-	}
-	
-	@PostMapping("/@{username}/unfollow")
-	public void unfollowUser(@PathVariable String username, @RequestBody CredentialsDto credentialsDto ) {
-		userService.unfollowUser(username,credentialsDto);
-	}
-
-	@DeleteMapping("/@{username}")
-	public UserResponseDto deleteUser(@PathVariable String username, @RequestBody CredentialsDto credentialsDto) {
-		return userService.deleteUser(username, credentialsDto);
+	@GetMapping("/@{username}/mentions")
+	public List<TweetResponseDto> getMentions(@PathVariable String username) {
+		return userService.getMentions(username);
 	}
 
 	@GetMapping("/@{username}/tweets")
 	public List<TweetResponseDto> getUserTweets(@PathVariable String username) {
 		return userService.getUserTweets(username);
 	}
+	
 
+	
+	/************************************
+	 * POST Mappings
+	 ************************************/
+	@PostMapping
+	public UserResponseDto createUser(@RequestBody UserRequestDto userRequestDto) {
+		return userService.createUser(userRequestDto);
+	}
+
+	@PostMapping("/@{username}/follow")
+	public void followUser(@PathVariable String username, @RequestBody CredentialsDto credentialsDto) {
+		userService.followUser(username, credentialsDto);
+	}
+
+	@PostMapping("/@{username}/unfollow")
+	public void unfollowUser(@PathVariable String username, @RequestBody CredentialsDto credentialsDto) {
+		userService.unfollowUser(username, credentialsDto);
+	}
 	
 	@PatchMapping("/@{username}")
 	public UserResponseDto patchUser(@PathVariable String username, @RequestBody UserRequestDto userRequestDto) {
 		return userService.patchUser(username, userRequestDto);
 	}
-	
+
+	/************************************
+	 * DELETE Mappings
+	 ************************************/
+	@DeleteMapping("/@{username}")
+	public UserResponseDto deleteUser(@PathVariable String username, @RequestBody CredentialsDto credentialsDto) {
+		return userService.deleteUser(username, credentialsDto);
+	}
 }

@@ -16,15 +16,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/validate")
 public class ValidateController {
-	private final ValidateService validateService;
 
+	private final ValidateService validateService;
+	private final HashtagService hashtagService;
+
+	/*************************************
+	 * GET Mappings
+	 *************************************/
 	@GetMapping("/username/exists/@{username}")
 	public Boolean validateUsernameExists(@PathVariable String username) {
 		return validateService.validateUsernameExists(username);
 	}
-	
-
-	private final HashtagService hashtagService;
 
 	@GetMapping("/tag/exists/{label}")
 	public boolean doesTagExist(@PathVariable String label) {

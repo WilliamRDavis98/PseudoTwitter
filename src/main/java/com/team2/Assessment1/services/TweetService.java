@@ -11,23 +11,18 @@ import com.team2.Assessment1.dtos.UserResponseDto;
 
 public interface TweetService {
 
+	/************************************
+	 * GET Methods
+	 ************************************/
 	List<TweetResponseDto> getAllTweets();
-
-	TweetResponseDto createTweet(TweetRequestDto tweetRequestDto);
 
 	TweetResponseDto getTweet(Long id);
 
-	void likeTweet(Long id, CredentialsDto credentialsDto);
-
-	TweetResponseDto deleteTweet(Long id, CredentialsDto credentialsDto);
-
-	List<HashtagDto> getTweetTags(Long id);
+	ContextDto getTweetContext(Long id);
 
 	List<UserResponseDto> getTweetLikes(Long id);
 
 	List<TweetResponseDto> getTweetReplies(Long id);
-
-	ContextDto getTweetContext(Long id);
 
 	List<TweetResponseDto> getTweetReposts(Long id);
 
@@ -35,4 +30,18 @@ public interface TweetService {
 
 	TweetResponseDto replyTweet(Long id, TweetRequestDto tweetRequestDto);
 	TweetResponseDto repostTweet(Long id, CredentialsDto credentialsDto);
+	List<HashtagDto> getTweetTags(Long id);
+
+	/************************************
+	 * POST Methods
+	 ************************************/
+	TweetResponseDto createTweet(TweetRequestDto tweetRequestDto);
+
+	void likeTweet(Long id, CredentialsDto credentialsDto);
+
+	/************************************
+	 * DELETE Methods
+	 ************************************/
+	TweetResponseDto deleteTweet(Long id, CredentialsDto credentialsDto);
+
 }
