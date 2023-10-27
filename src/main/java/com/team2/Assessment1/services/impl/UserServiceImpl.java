@@ -1,5 +1,6 @@
 package com.team2.Assessment1.services.impl;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,6 +12,7 @@ import com.team2.Assessment1.dtos.UserRequestDto;
 import com.team2.Assessment1.dtos.UserResponseDto;
 import com.team2.Assessment1.entities.Credentials;
 import com.team2.Assessment1.entities.Profile;
+import com.team2.Assessment1.entities.Tweet;
 import com.team2.Assessment1.entities.User;
 import com.team2.Assessment1.exceptions.BadRequestException;
 import com.team2.Assessment1.exceptions.NotAuthorizedException;
@@ -231,6 +233,30 @@ public class UserServiceImpl implements UserService {
 		List<UserResponseDto> dtos = userMapper.entitiesToDtos(followers);
 
 		return dtos;
+	}
+
+	@Override
+	public List<TweetResponseDto> getFeed(String username) {		
+		// Check if username is valid
+		Optional<User> userToGetFeed = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
+		if (userToGetFeed.isEmpty()) {
+			throw new NotFoundException("No user with username: " + username);
+		}		
+		
+		// Retrieve all users that the user is following
+		List<User>usersBeingFollowed = userToGetFeed.get().getFollowing();
+		
+		// Retrieve all tweets from user
+		List<Tweet>userFeed = userToGetFeed.get().getTweets();
+		
+		// Retrieve all tweets from those being followed
+		for(User followee: usersBeingFollowed) {
+			userFeed.addAll(followee.getTweets());
+		}
+		
+		// Sort
+		Collections.sort(userFeed, (y,x) -> x.getPosted().compareTo(y.getPosted()));		
+		return tweetMapper.entitiesToDtos(userFeed);
 	}
 
 }

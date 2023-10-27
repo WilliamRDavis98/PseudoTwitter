@@ -279,4 +279,105 @@ public class TweetServiceImpl implements TweetService {
 		}
 		return sortedList;
 	}
+
+	@Override
+	public List<TweetResponseDto> getTweetReposts(Long id) {
+		//Check if tweet exists (created and not deleted)
+		Optional<Tweet> originalRepost = tweetRepository.findByIdAndDeletedFalse(id);
+		if(originalRepost.isEmpty()) {
+			throw new NotFoundException("The tweet with the id: " + id + " is not found");
+		}		
+		//Retrieves the direct posts of the tweet with the given id, deleted reposts of the tweet should be excluded		
+		List<Tweet> directReposts = tweetRepository.findAllByRepostOfAndDeletedFalse(originalRepost.get());		
+		return tweetMapper.entitiesToDtos(directReposts);
+	}
+
+	@Override
+	public List<UserResponseDto> getMentionedUsers(Long id) {
+		//Check if tweet exists
+		Optional<Tweet> tweetMentionsUsers = tweetRepository.findByIdAndDeletedFalse(id);
+		if(tweetMentionsUsers.isEmpty()) {
+			throw new NotFoundException("The tweet with the id: " + id + " is not found");
+		}
+		//Retrieves the users mentioned in the tweet
+		List<User> usersMentioned = tweetMentionsUsers.get().getMentions();
+		
+		//Removed deleted users mentioned in the tweet
+		for (User u:usersMentioned) {
+			if(u.isDeleted() == true) {
+				usersMentioned.remove(u);
+			}
+		}
+		
+		return userMapper.entitiesToDtos(usersMentioned);
+	}
+
+	@Override
+	public TweetResponseDto replyTweet(Long id, TweetRequestDto tweetRequestDto) {
+		CredentialsDto userCredentials = tweetRequestDto.getCredentials();
+		Optional<Tweet> originalTweet = tweetRepository.findByIdAndDeletedFalse(id);
+
+		// Error Handling for BadRequestException
+		if (tweetRequestDto.getContent() == null) {
+			throw new BadRequestException("Bad Request: No Content");
+		}
+		if (userCredentials == null) {
+			throw new BadRequestException("Bad Request: No Credentials");
+		}
+		if (userCredentials.getPassword() == null || userCredentials.getUsername() == null) {
+			throw new BadRequestException("Bad Request: Missing username/password in Credentials");
+		}
+		if (originalTweet.isEmpty()) {
+			throw new NotFoundException("Tweet with id: " + id + " does not exist");
+		}
+
+		Tweet replyTweet = tweetMapper.dtoToEntity(tweetRequestDto);
+		User user = userRepository.findByCredentialsUsernameAndDeletedFalse(userCredentials.getUsername()).get();
+
+		// Check if User exists
+		if (user == null || user.isDeleted()) {
+			throw new NotFoundException("User not found or not active" + user);
+		}
+
+		replyTweet.setAuthor(user);
+		replyTweet.setInReplyTo(originalTweet.get());
+		List<Tweet> newRepliesList = originalTweet.get().getReplies();
+		newRepliesList.add(replyTweet);
+		originalTweet.get().setReplies(newRepliesList);
+		
+		//Take the #hashTags and @User mentions and store those appropriately
+		String[] contentSplitOnSpace = replyTweet.getContent().split("\\s");		
+		
+		
+		for(String word: contentSplitOnSpace) {
+			
+			// Addresses the #tags used in the Tweets content
+			if(word.startsWith("#")) {
+				String label = word.substring(1, word.length());
+				Hashtag tag = hashtagRepository.findByLabel(word);
+				if(tag == null) {
+					tag = new Hashtag();
+					tag.setLabel(label);
+					
+					tag.setTaggedTweets(Collections.singletonList(replyTweet));
+					replyTweet.setTags(Collections.singletonList(tag));
+				} else {
+					tag.getTaggedTweets().add(replyTweet);
+				}
+				
+				hashtagRepository.saveAndFlush(tag);
+			}
+			
+			// Adds users to the Tweets List<User> mentions
+			if(word.startsWith("@")) {
+				String userName = word.substring(1, word.length());
+				Optional<User> mentionedUser = userRepository.findByCredentialsUsernameAndDeletedFalse(userName);
+				
+				replyTweet.setMentions(Collections.singletonList(mentionedUser.get()));
+				mentionedUser.get().getMentionedBy().add(replyTweet);
+			}
+		}
+		tweetRepository.saveAndFlush(originalTweet.get());
+		return tweetMapper.entityToDto(tweetRepository.saveAndFlush(replyTweet));
+	}
 }

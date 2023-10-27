@@ -1,12 +1,14 @@
 package com.team2.Assessment1.repositories;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.team2.Assessment1.entities.Hashtag;
 import com.team2.Assessment1.entities.Tweet;
 
 @Repository
@@ -16,5 +18,11 @@ public interface TweetRepository extends JpaRepository<Tweet, Long> {
 //    List<Tweet> findMentionsByUsername(@Param("username") String username);
 	
 	List<Tweet> findAllByDeletedFalse();
+
+	Optional<Tweet> findByIdAndDeletedFalse(Long id);
+
+	List<Tweet> findAllByRepostOfAndDeletedFalse(Tweet tweet);
+
+	
 
 }

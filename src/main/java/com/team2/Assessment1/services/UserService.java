@@ -28,4 +28,6 @@ public interface UserService {
 	List<UserResponseDto> getFollowers(String username);
 
 	void unfollowUser(String username, CredentialsDto credentialsDto);
+
+	List<TweetResponseDto> getFeed(String username);
 }
