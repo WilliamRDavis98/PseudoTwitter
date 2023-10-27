@@ -2,8 +2,10 @@ package com.team2.Assessment1.services;
 
 public interface ValidateService {
 
-	Boolean validateUsernameExists(String username);
-
+	/*************************************
+	 * GET Methods
+	 *************************************/
 	Boolean validateUsernameAvailable(String username);
 
+	Boolean validateUsernameExists(String username);
 }

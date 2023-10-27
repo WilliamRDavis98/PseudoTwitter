@@ -23,10 +23,23 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class HashtagServiceImpl implements HashtagService {
+	
+	// Mapper Declarations
 	private final HashtagMapper hashtagMapper;
-	private final HashtagRepository hashtagRepository;
 	private final TweetMapper tweetMapper;
+	
+	// Repository Declarations
+	private final HashtagRepository hashtagRepository;
 	private final TweetRepository tweetRepository;
+
+	
+	/************************************
+	 * GET Methods
+	 ************************************/
+	@Override
+	public boolean doesTagExist(String label) {
+		return hashtagRepository.findByLabel(label) != null;
+	}
 
 	@Override
 	public List<HashtagDto> getAllHashtags() {
@@ -35,7 +48,7 @@ public class HashtagServiceImpl implements HashtagService {
 
 	@Override
 	public List<TweetResponseDto> getTaggedTweets(String label) {
-		Hashtag searchedTag = hashtagRepository.findByLabel("#" + label);
+		Hashtag searchedTag = hashtagRepository.findByLabel(label);
 		Optional<Hashtag> checkTag = Optional.ofNullable(searchedTag);
 
 		if (checkTag.isEmpty()) {
@@ -53,10 +66,6 @@ public class HashtagServiceImpl implements HashtagService {
 
 		Collections.sort(taggedTweets, (y, x) -> x.getPosted().compareTo(y.getPosted()));
 		return tweetMapper.entitiesToDtos(taggedTweets);
-	}
-
-	public boolean doesTagExist(String label) {
-		return hashtagRepository.findByLabel(label) != null;
 	}
 
 }

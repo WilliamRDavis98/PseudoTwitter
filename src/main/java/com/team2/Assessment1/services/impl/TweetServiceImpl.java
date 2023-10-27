@@ -46,6 +46,14 @@ public class TweetServiceImpl implements TweetService {
 	private final UserRepository userRepository;
 	private final HashtagRepository hashtagRepository;
 
+	/************************************
+	 * GET Methods
+	 ************************************/
+	@Override
+	public List<TweetResponseDto> getAllTweets() {
+		return tweetMapper.entitiesToDtos(tweetRepository.findAllByDeletedFalse());
+	}
+
 	@Override
 	public TweetResponseDto getTweet(Long id) {
 		Optional<Tweet> requestedTweet = tweetRepository.findById(id);
@@ -62,10 +70,114 @@ public class TweetServiceImpl implements TweetService {
 	}
 
 	@Override
-	public List<TweetResponseDto> getAllTweets() {
-		return tweetMapper.entitiesToDtos(tweetRepository.findAllByDeletedFalse());
+	public ContextDto getTweetContext(Long id) {
+		Optional<Tweet> requestedTweet = tweetRepository.findById(id);
+
+		if (requestedTweet.isEmpty()) {
+			throw new NotFoundException("Tweet with id '" + id + "' not found");
+		}
+
+		if (requestedTweet.get().isDeleted()) {
+			throw new NotFoundException("Tweet with id '" + id + "' has been deleted");
+		}
+		ContextDto contextDto = new ContextDto();
+		List<Tweet> before = new ArrayList<>();
+		List<Tweet> after = new ArrayList<>();
+		Tweet currentTweet = requestedTweet.get();
+		while (currentTweet.getInReplyTo() != null) {
+			before.add(0, currentTweet.getInReplyTo());
+			currentTweet = currentTweet.getInReplyTo();
+		}
+		System.out.println("Getting Reply Chain");
+		after = getReplyChain(requestedTweet.get(), after);
+		after = sortTweetsInChronologicalOrder(after);
+		contextDto.setTarget(tweetMapper.entityToDto(requestedTweet.get()));
+		contextDto.setBefore(tweetMapper.entitiesToDtos(before));
+		contextDto.setAfter(tweetMapper.entitiesToDtos(after));
+		return contextDto;
 	}
 
+	@Override
+	public List<UserResponseDto> getTweetLikes(Long id) {
+		Optional<Tweet> requestedTweet = tweetRepository.findById(id);
+
+		if (requestedTweet.isEmpty()) {
+			throw new NotFoundException("Tweet with id '" + id + "' not found");
+		}
+
+		if (requestedTweet.get().isDeleted()) {
+			throw new NotFoundException("Tweet with id '" + id + "' has been deleted");
+		}
+
+		return userMapper.entitiesToDtos(requestedTweet.get().getLikedBy());
+	}
+	
+
+	@Override
+	public List<UserResponseDto> getMentionedUsers(Long id) {
+		//Check if tweet exists
+		Optional<Tweet> tweetMentionsUsers = tweetRepository.findByIdAndDeletedFalse(id);
+		if(tweetMentionsUsers.isEmpty()) {
+			throw new NotFoundException("The tweet with the id: " + id + " is not found");
+		}
+		//Retrieves the users mentioned in the tweet
+		List<User> usersMentioned = tweetMentionsUsers.get().getMentions();
+		
+		//Removed deleted users mentioned in the tweet
+		for (User u:usersMentioned) {
+			if(u.isDeleted() == true) {
+				usersMentioned.remove(u);
+			}
+		}
+		
+		return userMapper.entitiesToDtos(usersMentioned);
+	}
+
+	@Override
+	public List<TweetResponseDto> getTweetReplies(Long id) {
+		Optional<Tweet> requestedTweet = tweetRepository.findById(id);
+
+		if (requestedTweet.isEmpty()) {
+			throw new NotFoundException("Tweet with id '" + id + "' not found");
+		}
+
+		if (requestedTweet.get().isDeleted()) {
+			throw new NotFoundException("Tweet with id '" + id + "' has been deleted");
+		}
+
+		return tweetMapper.entitiesToDtos(requestedTweet.get().getReplies());
+	}
+	
+	@Override
+	public List<TweetResponseDto> getTweetReposts(Long id) {
+		//Check if tweet exists (created and not deleted)
+		Optional<Tweet> originalRepost = tweetRepository.findByIdAndDeletedFalse(id);
+		if(originalRepost.isEmpty()) {
+			throw new NotFoundException("The tweet with the id: " + id + " is not found");
+		}		
+		//Retrieves the direct posts of the tweet with the given id, deleted reposts of the tweet should be excluded		
+		List<Tweet> directReposts = tweetRepository.findAllByRepostOfAndDeletedFalse(originalRepost.get());		
+		return tweetMapper.entitiesToDtos(directReposts);
+	}
+
+	@Override
+	public List<HashtagDto> getTweetTags(Long id) {
+		Optional<Tweet> requestedTweet = tweetRepository.findById(id);
+
+		if (requestedTweet.isEmpty()) {
+			throw new NotFoundException("Tweet with id '" + id + "' not found");
+		}
+
+		if (requestedTweet.get().isDeleted()) {
+			throw new NotFoundException("Tweet with id '" + id + "' has been deleted");
+		}
+
+		return hashtagMapper.entitiesToDtos(requestedTweet.get().getTags());
+	}
+
+	/************************************
+	 * POST Methods
+	 ************************************/
 	@Override
 	public TweetResponseDto createTweet(TweetRequestDto tweetRequestDto) {
 		CredentialsDto userCredentials = tweetRequestDto.getCredentials();
@@ -92,40 +204,39 @@ public class TweetServiceImpl implements TweetService {
 		}
 
 		newTweet.setAuthor(user);
-		
-		//Take the #hashTags and @User mentions and store those appropriately
-		String[] contentSplitOnSpace = newTweet.getContent().split("\\s");		
-		
-		
-		for(String word: contentSplitOnSpace) {
-			
+
+		// Take the #hashTags and @User mentions and store those appropriately
+		String[] contentSplitOnSpace = newTweet.getContent().split("\\s");
+
+		for (String word : contentSplitOnSpace) {
+
 			// Addresses the #tags used in the Tweets content
-			if(word.startsWith("#")) {
+			if (word.startsWith("#")) {
 				String label = word.substring(1, word.length());
 				Hashtag tag = hashtagRepository.findByLabel(word);
-				if(tag == null) {
+				if (tag == null) {
 					tag = new Hashtag();
 					tag.setLabel(label);
-					
+
 					tag.setTaggedTweets(Collections.singletonList(newTweet));
 					newTweet.setTags(Collections.singletonList(tag));
 				} else {
 					tag.getTaggedTweets().add(newTweet);
 				}
-				
+
 				hashtagRepository.saveAndFlush(tag);
 			}
-			
+
 			// Adds users to the Tweets List<User> mentions
-			if(word.startsWith("@")) {
+			if (word.startsWith("@")) {
 				String userName = word.substring(1, word.length());
 				Optional<User> mentionedUser = userRepository.findByCredentialsUsernameAndDeletedFalse(userName);
-				
+
 				newTweet.setMentions(Collections.singletonList(mentionedUser.get()));
 				mentionedUser.get().getMentionedBy().add(newTweet);
 			}
 		}
-		
+
 		return tweetMapper.entityToDto(tweetRepository.saveAndFlush(newTweet));
 	}
 
@@ -141,181 +252,14 @@ public class TweetServiceImpl implements TweetService {
 		if (user == null || user.isDeleted()) {
 			throw new NotFoundException("User matching given credentials not found");
 		}
-
-		user.getLikedTweets().add(tweetToLike);
-		userRepository.saveAndFlush(user);
-	}
-
-	@Override
-	public TweetResponseDto deleteTweet(Long id, CredentialsDto credentialsDto) {
-		Optional<Tweet> findTweet = tweetRepository.findById(id);
-
-		if (findTweet.isEmpty()) {
-			throw new NotFoundException("Tweet with id '" + id + "' not found");
-		}
-
-		Tweet deletedTweet = findTweet.get();
-		User user = userRepository.findByCredentialsUsernameAndDeletedFalse(credentialsDto.getUsername()).get();
-
-		if (!deletedTweet.getAuthor().equals(user)) {
-			throw new NotFoundException("User requesting deletion is not author of the tweet");
-		}
-
-		if (deletedTweet.isDeleted()) {
-			throw new BadRequestException("Tweet is already deleted with id " + id);
-		}
-
-		deletedTweet.setDeleted(true);
-
-		return tweetMapper.entityToDto(tweetRepository.saveAndFlush(deletedTweet));
-	}
-
-	@Override
-	public List<HashtagDto> getTweetTags(Long id) {
-		Optional<Tweet> requestedTweet = tweetRepository.findById(id);
-
-		if (requestedTweet.isEmpty()) {
-			throw new NotFoundException("Tweet with id '" + id + "' not found");
-		}
-
-		if (requestedTweet.get().isDeleted()) {
-			throw new NotFoundException("Tweet with id '" + id + "' has been deleted");
-		}
-
-		return hashtagMapper.entitiesToDtos(requestedTweet.get().getTags());
-	}
-
-	@Override
-	public List<UserResponseDto> getTweetLikes(Long id) {
-		Optional<Tweet> requestedTweet = tweetRepository.findById(id);
-
-		if (requestedTweet.isEmpty()) {
-			throw new NotFoundException("Tweet with id '" + id + "' not found");
-		}
-
-		if (requestedTweet.get().isDeleted()) {
-			throw new NotFoundException("Tweet with id '" + id + "' has been deleted");
-		}
-
-		return userMapper.entitiesToDtos(requestedTweet.get().getLikedBy());
-	}
-
-	@Override
-	public List<TweetResponseDto> getTweetReplies(Long id) {
-		Optional<Tweet> requestedTweet = tweetRepository.findById(id);
-
-		if (requestedTweet.isEmpty()) {
-			throw new NotFoundException("Tweet with id '" + id + "' not found");
-		}
-
-		if (requestedTweet.get().isDeleted()) {
-			throw new NotFoundException("Tweet with id '" + id + "' has been deleted");
-		}
-
-		return tweetMapper.entitiesToDtos(requestedTweet.get().getReplies());
-	}
-
-	@Override
-	public ContextDto getTweetContext(Long id) {
-		Optional<Tweet> requestedTweet = tweetRepository.findById(id);
-
-		if (requestedTweet.isEmpty()) {
-			throw new NotFoundException("Tweet with id '" + id + "' not found");
-		}
-
-		if (requestedTweet.get().isDeleted()) {
-			throw new NotFoundException("Tweet with id '" + id + "' has been deleted");
-		}
-		ContextDto contextDto = new ContextDto();
-		List<Tweet> before = new ArrayList<>();
-		List<Tweet> after = new ArrayList<>();
-		Tweet currentTweet = requestedTweet.get();
-		while(currentTweet.getInReplyTo() != null) {
-			before.add(0, currentTweet.getInReplyTo());
-			currentTweet = currentTweet.getInReplyTo();
-		}
-		System.out.println("Getting Reply Chain");
-		after = getReplyChain(requestedTweet.get(), after);
-		after = sortTweetsInChronologicalOrder(after);
-		contextDto.setTarget(tweetMapper.entityToDto(requestedTweet.get()));
-		contextDto.setBefore(tweetMapper.entitiesToDtos(before));
-		contextDto.setAfter(tweetMapper.entitiesToDtos(after));
-		return contextDto; 
-	}
-
-	private List<Tweet> getReplyChain(Tweet tweet, List<Tweet> after) {
-		if(after.isEmpty()) {
-			after = new ArrayList<>();
-		}
-		if (tweet.getReplies().isEmpty()) {
-			return after;
-		} else {
-			for(Tweet reply: tweet.getReplies()) {
-				System.out.println(reply.getId());
-				after.add(reply);
-				after = getReplyChain(reply, after);
-			}
-		}
-
-		return after;
-	}
-
-	private List<Tweet> sortTweetsInChronologicalOrder(List<Tweet> tweets) {
-		List<Tweet> sortedList = new ArrayList<>();
-		System.out.println("Sorting");
-		for (Tweet tweet : tweets) {
-			System.out.println(tweet.getId());
-			if(sortedList.isEmpty()) {
-				sortedList.add(tweet);
-			} else {
-				for (Tweet sortedTweet: sortedList) {
-					if(tweet.getPosted().compareTo(sortedTweet.getPosted()) <= 0) { // if tweet being sorted is older than the already sorted tweet, insert at this position
-						sortedList.add(sortedList.indexOf(sortedTweet), tweet);
-						break;
-					}
-				}
-				sortedList.add(tweet);
-			}
-		}
-		System.out.println("Sorted List");
-		for (Tweet tweet : sortedList) {
-			System.out.println(tweet.getId());
-		}
-		return sortedList;
-	}
-
-	@Override
-	public List<TweetResponseDto> getTweetReposts(Long id) {
-		//Check if tweet exists (created and not deleted)
-		Optional<Tweet> originalRepost = tweetRepository.findByIdAndDeletedFalse(id);
-		if(originalRepost.isEmpty()) {
-			throw new NotFoundException("The tweet with the id: " + id + " is not found");
-		}		
-		//Retrieves the direct posts of the tweet with the given id, deleted reposts of the tweet should be excluded		
-		List<Tweet> directReposts = tweetRepository.findAllByRepostOfAndDeletedFalse(originalRepost.get());		
-		return tweetMapper.entitiesToDtos(directReposts);
-	}
-
-	@Override
-	public List<UserResponseDto> getMentionedUsers(Long id) {
-		//Check if tweet exists
-		Optional<Tweet> tweetMentionsUsers = tweetRepository.findByIdAndDeletedFalse(id);
-		if(tweetMentionsUsers.isEmpty()) {
-			throw new NotFoundException("The tweet with the id: " + id + " is not found");
-		}
-		//Retrieves the users mentioned in the tweet
-		List<User> usersMentioned = tweetMentionsUsers.get().getMentions();
 		
-		//Removed deleted users mentioned in the tweet
-		for (User u:usersMentioned) {
-			if(u.isDeleted() == true) {
-				usersMentioned.remove(u);
-			}
+		if(!tweetToLike.getLikedBy().contains(user)) {
+			user.getLikedTweets().add(tweetToLike);
+			userRepository.saveAndFlush(user);
 		}
-		
-		return userMapper.entitiesToDtos(usersMentioned);
-	}
 
+	}
+	
 	@Override
 	public TweetResponseDto replyTweet(Long id, TweetRequestDto tweetRequestDto) {
 		CredentialsDto userCredentials = tweetRequestDto.getCredentials();
@@ -410,6 +354,78 @@ public class TweetServiceImpl implements TweetService {
 
 		return tweetMapper.entityToDto(tweetRepository.saveAndFlush(repost));
 
+	}
+
+	/************************************
+	 * DELETE Methods
+	 ************************************/
+	@Override
+	public TweetResponseDto deleteTweet(Long id, CredentialsDto credentialsDto) {
+		Optional<Tweet> findTweet = tweetRepository.findById(id);
+
+		if (findTweet.isEmpty()) {
+			throw new NotFoundException("Tweet with id '" + id + "' not found");
+		}
+
+		Tweet deletedTweet = findTweet.get();
+		User user = userRepository.findByCredentialsUsernameAndDeletedFalse(credentialsDto.getUsername()).get();
+
+		if (!deletedTweet.getAuthor().equals(user)) {
+			throw new NotFoundException("User requesting deletion is not author of the tweet");
+		}
+
+		if (deletedTweet.isDeleted()) {
+			throw new BadRequestException("Tweet is already deleted with id " + id);
+		}
+
+		deletedTweet.setDeleted(true);
+
+		return tweetMapper.entityToDto(tweetRepository.saveAndFlush(deletedTweet));
+	}
+
+	/************************************
+	 * Helper Methods
+	 ************************************/
+	private List<Tweet> getReplyChain(Tweet tweet, List<Tweet> after) {
+		if (after.isEmpty()) {
+			after = new ArrayList<>();
+		}
+		if (tweet.getReplies().isEmpty()) {
+			return after;
+		} else {
+			for (Tweet reply : tweet.getReplies()) {
+				System.out.println(reply.getId());
+				after.add(reply);
+				after = getReplyChain(reply, after);
+			}
+		}
+
+		return after;
+	}
+
+	private List<Tweet> sortTweetsInChronologicalOrder(List<Tweet> tweets) {
+		List<Tweet> sortedList = new ArrayList<>();
+		System.out.println("Sorting");
+		for (Tweet tweet : tweets) {
+			System.out.println(tweet.getId());
+			if (sortedList.isEmpty()) {
+				sortedList.add(tweet);
+			} else {
+				for (Tweet sortedTweet : sortedList) {
+					// if tweet being sorted is older than the already sorted tweet, insert at this position
+					if (tweet.getPosted().compareTo(sortedTweet.getPosted()) <= 0) {
+						sortedList.add(sortedList.indexOf(sortedTweet), tweet);
+						break;
+					}
+				}
+				sortedList.add(tweet);
+			}
+		}
+		System.out.println("Sorted List");
+		for (Tweet tweet : sortedList) {
+			System.out.println(tweet.getId());
+		}
+		return sortedList;
 	}
 }
 

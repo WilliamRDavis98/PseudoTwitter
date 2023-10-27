@@ -6,11 +6,14 @@ import com.team2.Assessment1.dtos.HashtagDto;
 import com.team2.Assessment1.dtos.TweetResponseDto;
 
 public interface HashtagService {
+	
+	/************************************
+	 * GET Methods
+	 ************************************/
+	boolean doesTagExist(String label);
 
 	List<HashtagDto> getAllHashtags();
 
 	List<TweetResponseDto> getTaggedTweets(String label);
-
-	boolean doesTagExist(String label);
 
 }
