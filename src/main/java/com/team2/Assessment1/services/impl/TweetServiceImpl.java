@@ -14,10 +14,13 @@ import com.team2.Assessment1.dtos.TweetRequestDto;
 import com.team2.Assessment1.dtos.TweetResponseDto;
 import com.team2.Assessment1.dtos.UserResponseDto;
 import com.team2.Assessment1.entities.Hashtag;
+import com.team2.Assessment1.entities.Credentials;
 import com.team2.Assessment1.entities.Tweet;
 import com.team2.Assessment1.entities.User;
 import com.team2.Assessment1.exceptions.BadRequestException;
+import com.team2.Assessment1.exceptions.NotAuthorizedException;
 import com.team2.Assessment1.exceptions.NotFoundException;
+import com.team2.Assessment1.mappers.CredentialsMapper;
 import com.team2.Assessment1.mappers.HashtagMapper;
 import com.team2.Assessment1.mappers.TweetMapper;
 import com.team2.Assessment1.mappers.UserMapper;
@@ -36,6 +39,7 @@ public class TweetServiceImpl implements TweetService {
 	private final TweetMapper tweetMapper;
 	private final HashtagMapper hashtagMapper;
 	private final UserMapper userMapper;
+	private final CredentialsMapper credentialsMapper;
 	
 	// Repository Declarations
 	private final TweetRepository tweetRepository;
@@ -380,4 +384,32 @@ public class TweetServiceImpl implements TweetService {
 		tweetRepository.saveAndFlush(originalTweet.get());
 		return tweetMapper.entityToDto(tweetRepository.saveAndFlush(replyTweet));
 	}
+
+	public TweetResponseDto repostTweet(Long id, CredentialsDto credentialsDto) {
+		// Error Handling for BadRequestException
+		Tweet originalTweet = tweetMapper.responseDtoToEntity(getTweet(id));
+		if (originalTweet.isDeleted() || originalTweet == null) {
+			throw new BadRequestException("Tweet was deleted or doesn't exist");
+		}
+		Credentials submittedCredentials = credentialsMapper.dtoToEntity(credentialsDto);
+		boolean matchesUser = false;
+		for (User user : userRepository.findAllByDeletedFalse()) {
+			if (user.getCredentials().equals(submittedCredentials)) {
+				matchesUser = true;
+				break;
+			}
+		}
+		if (!matchesUser) {
+			throw new NotAuthorizedException("Username/Password is incorrect");
+		}
+
+		Tweet repost = new Tweet();
+		repost.setAuthor(userRepository.findByCredentialsUsernameAndDeletedFalse(submittedCredentials.getUsername()).get());
+		repost.setRepostOf(originalTweet);
+		
+
+		return tweetMapper.entityToDto(tweetRepository.saveAndFlush(repost));
+
+	}
 }
+
