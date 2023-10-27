@@ -258,5 +258,19 @@ public class UserServiceImpl implements UserService {
 		Collections.sort(userFeed, (y,x) -> x.getPosted().compareTo(y.getPosted()));		
 		return tweetMapper.entitiesToDtos(userFeed);
 	}
+	@Override
+	public UserResponseDto patchUser(String username, UserRequestDto userRequestDto) {
+		Optional<User> optionalUserToPatch = userRepository.findByCredentialsUsernameAndDeletedFalse(username);
+		if (optionalUserToPatch.isEmpty()) {
+			throw new NotFoundException("No user with username: " + username);
+		}
+		User userWithUpdates = userMapper.dtoToEntity(userRequestDto);
+		if(!optionalUserToPatch.get().getCredentials().getPassword().equals(userWithUpdates.getCredentials().getPassword())) {
+			throw new NotAuthorizedException("Incorrect Password");
+		}
+		User userToPatch = optionalUserToPatch.get();
+		userToPatch.setProfile(userWithUpdates.getProfile());
+		return userMapper.entityToDto(userRepository.saveAndFlush(userToPatch));
+	}
 
 }
